@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand palette */
+  --color-navy: #101c32;
+  --color-navy-deep: #0b1424;
+  --color-navy-soft: #1b2b47;
+  --color-ivory: #f8f6f0;
+  --color-ivory-deep: #efeade;
+  --color-gold: #c5a15b;
+  --color-gold-soft: #ddc498;
+  --color-gold-deep: #856029;
+  --color-charcoal: #2b2b2e;
+  --color-charcoal-soft: #55565c;
+  --color-line: #e3ddcf;
+
+  /* Type */
+  --font-display: "Fraunces Variable", "Iowan Old Style", "Palatino Linotype",
+    Georgia, serif;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+
+  /* Editorial rhythm */
+  --radius-card: 2px;
+
+  --animate-rise: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: var(--color-ivory);
+    color: var(--color-charcoal);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  ::selection {
+    background-color: var(--color-gold);
+    color: var(--color-navy);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 3px;
+  }
+}
+
+@utility container-editorial {
+  width: 100%;
+  margin-inline: auto;
+  max-width: 78rem;
+  padding-inline: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .container-editorial {
+    padding-inline: 2rem;
+  }
+}
+
+/* Small caps label used across the site */
+@utility eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+/* Thin gold rule with a woven motif */
+@utility gold-rule {
+  display: block;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-gold) 18%,
+    var(--color-gold) 82%,
+    transparent
+  );
+  opacity: 0.55;
+}
+
+@utility paper-texture {
+  background-image:
+    radial-gradient(
+      circle at 18% 12%,
+      rgba(197, 161, 91, 0.09),
+      transparent 45%
+    ),
+    radial-gradient(
+      circle at 82% 88%,
+      rgba(16, 28, 50, 0.06),
+      transparent 50%
+    );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
