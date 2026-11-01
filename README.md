@@ -99,6 +99,14 @@ Supabase-backed data layer without changing the page components — the helpers 
 
 Prices are shown in NGN (`₦`) via `Intl.NumberFormat` with the `en-NG` locale.
 
+## Architecture documentation
+
+Phase 2 (database, roles, storage, payments, moderation) is designed in
+[`docs/phase-2/`](./docs/phase-2/README.md) — schema, ER diagrams, RLS and
+permission matrix, private-storage design, 90/10 commission ledger, Flutterwave
+verification plan and the implementation sequence. **No database exists yet**;
+that documentation is a proposal awaiting review.
+
 ## Roadmap
 
 1. **Phase 1 (this build)** — foundation, homepage, marketplace, book pages,
