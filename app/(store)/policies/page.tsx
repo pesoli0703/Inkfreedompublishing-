@@ -33,7 +33,7 @@ const sections = [
     title: "Refunds & Returns",
     body: [
       "Customer payments are not yet switched on. Until they are, no checkout can complete and no money is taken through this site.",
-      "When sales open, a full refund and returns policy covering physical orders, digital editions and damaged deliveries will be published here before the first transaction. It will sit alongside the payment terms provided by Flutterwave, and digital download access will be granted only after the payment has been verified server-side.",
+      "When sales open, a full refund and returns policy covering eBook purchases and download access will be published here before the first transaction. It will sit alongside the payment terms provided by Flutterwave, and digital download access will be granted only after the payment has been verified server-side.",
     ],
   },
 ];

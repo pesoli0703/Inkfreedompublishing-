@@ -25,7 +25,7 @@ const groups = [
       },
       {
         q: "Which formats are sold?",
-        a: "Digital editions (EPUB and PDF) today. Print editions are described in the catalogue but are not on sale while fulfilment is being finalised.",
+        a: "eBooks, delivered as a PDF or an EPUB — whichever the author uploaded. Every title sells as a download, so there is nothing to ship and no delivery address to supply.",
       },
     ],
   },
