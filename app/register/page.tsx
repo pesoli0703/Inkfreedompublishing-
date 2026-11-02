@@ -15,8 +15,8 @@ const steps = [
     body: "A verification link is sent once an email provider is configured. Until then no email claim is made.",
   },
   {
-    title: "Buy or apply",
-    body: "Readers can buy immediately. Authors submit an application for review before any book can be listed.",
+    title: "Buy or publish",
+    body: "Readers can buy immediately. To sell, choose a pen name — your author workspace opens straight away and your first book can be uploaded the same day.",
   },
   {
     title: "Keep your library",
