@@ -1,7 +1,10 @@
 # Phase 2 — Database architecture & Supabase preparation
 
-**Status:** design proposal — awaiting review. **No database has been created, no
-migration has been applied, no application code has been changed.**
+**Status:** implemented on the Supabase project `xwqmfdsfmalxsirojuwi`
+(migrations `0001`–`0020` applied) and running on Vercel **previews only**.
+Nothing is promoted to production and no live payments are enabled. The
+documents below remain the reference for what was built; when code and document
+disagree, the migration files under `supabase/migrations/` win.
 
 This folder is the complete architectural plan for turning INKFREEDOMPUBLISHING
 from a catalogue front-end into a real multi-author publishing marketplace:
@@ -19,6 +22,8 @@ withdrawals.
 | [05-payments-and-commissions.md](./05-payments-and-commissions.md) | Order lifecycle, server-side verification, double-entry ledger, 90/10 split, refunds, withdrawals, multi-currency |
 | [06-moderation-and-admin.md](./06-moderation-and-admin.md) | Book approval workflow and the administrator dashboard plan |
 | [07-implementation-sequence.md](./07-implementation-sequence.md) | Milestones, acceptance criteria, migration safety, test plan |
+| [08-flutterwave.md](./08-flutterwave.md) | Flutterwave v3 integration: initiation, webhook verification, settlement, reconciliation, go-live checklist |
+| [09-deployment-environment.md](./09-deployment-environment.md) | Which environment variables exist and where, how to prove a deployment is connected |
 
 ## The design in one page
 
@@ -79,8 +84,11 @@ a signed URL that expires in 120 seconds.
 
 ## Explicitly out of scope for this phase
 
-- No live payment keys, no Flutterwave account configuration, no production
-  Supabase project.
+- No live payment keys and no production promotion. The Flutterwave client,
+  webhook and reconciliation code exists (see
+  [08-flutterwave.md](./08-flutterwave.md)) but `platform_settings.payments_mode`
+  stays `'disabled'` until real test keys are supplied and a round-trip is
+  proven.
 - No real authors, books or sales data are invented anywhere. Development
   fixtures, if any, are clearly marked seed data in a non-production project.
 - No change to the existing homepage, marketplace UI or design system.
