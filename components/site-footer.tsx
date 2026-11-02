@@ -17,9 +17,14 @@ const authority = [
 ];
 
 const legal = [
-  { href: "/policies#privacy", label: "Privacy" },
-  { href: "/policies#terms", label: "Terms of Use" },
-  { href: "/policies#refunds", label: "Refunds & Returns" },
+  { href: "/terms", label: "Terms of Use" },
+  { href: "/privacy", label: "Privacy Policy" },
+  { href: "/refunds", label: "Refund Policy" },
+  { href: "/withdrawal-policy", label: "Withdrawal Policy" },
+  { href: "/author-agreement", label: "Author Agreement" },
+  { href: "/copyright", label: "Copyright & Takedown" },
+  { href: "/faq", label: "FAQ" },
+  { href: "/contact", label: "Contact" },
 ];
 
 const social = ["Instagram", "X", "LinkedIn"];

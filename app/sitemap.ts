@@ -5,7 +5,24 @@ import { authors } from "@/lib/data/authors";
 const base = "https://inkfreedompublishing.vercel.app";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const pages = ["", "/books", "/categories", "/authors", "/about", "/publish", "/policies"];
+  const pages = [
+    "",
+    "/books",
+    "/categories",
+    "/authors",
+    "/about",
+    "/publish",
+    "/policies",
+    "/register",
+    "/contact",
+    "/faq",
+    "/terms",
+    "/privacy",
+    "/refunds",
+    "/withdrawal-policy",
+    "/author-agreement",
+    "/copyright",
+  ];
 
   return [
     ...pages.map((path) => ({

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookCover } from "@/components/book-cover";
 import { BookGrid } from "@/components/book-card";
-import { PurchasePanel } from "@/components/purchase-panel";
+import { BookPurchase } from "@/components/book-purchase";
 import { SectionHeading } from "@/components/section-heading";
 import {
   authorName,
@@ -133,7 +133,7 @@ export default async function BookPage({ params }: { params: Promise<Params> }) 
                 </div>
 
                 <div>
-                  <PurchasePanel book={book} />
+                  <BookPurchase slug={book.slug} book={book} />
                 </div>
               </div>
 

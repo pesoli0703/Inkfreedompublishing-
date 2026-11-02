@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SignInForm } from "@/components/sign-in-form";
+import { Suspense } from "react";
+import { AuthForm } from "@/components/auth-form";
 import { books } from "@/lib/data/books";
 import { BookCover } from "@/components/book-cover";
 
 export const metadata: Metadata = {
   title: "Sign In",
   description:
-    "Reader and author accounts for INKFREEDOMPUBLISHING — accounts are not connected in this preview build.",
+    "Sign in to your INKFREEDOMPUBLISHING reader or author account.",
 };
 
 const benefits = [
@@ -39,8 +40,8 @@ export default function SignInPage() {
             Welcome back
           </h1>
           <p className="mt-5 max-w-md text-[0.95rem] leading-relaxed text-charcoal-soft">
-            Accounts will hold your orders, your reading list and — for authors
-            — your submissions and royalty statements.
+            Accounts hold your orders, your library, your reading list and — for
+            authors — submissions, sales and royalty statements.
           </p>
 
           <ul className="mt-8 space-y-3">
@@ -71,15 +72,17 @@ export default function SignInPage() {
         </div>
 
         <div className="lg:col-span-7">
-          <SignInForm />
+          <Suspense fallback={null}>
+            <AuthForm />
+          </Suspense>
 
           <div className="mt-5 border border-line bg-ivory p-5">
-            <p className="eyebrow text-charcoal-soft">Not connected yet</p>
+            <p className="eyebrow text-charcoal-soft">How accounts work</p>
             <p className="mt-2 text-[0.8rem] leading-relaxed text-charcoal-soft">
-              Authentication will run on Supabase. It has not been connected for
-              this build, so signing in is not possible yet — the form above is
-              here so the flow can be reviewed. No credentials are transmitted or
-              stored.
+              Accounts run on Supabase Authentication. Reader accounts are
+              created immediately. Author access requires an approved author
+              application — no one can promote themselves to author or
+              administrator from the browser.
             </p>
           </div>
 
