@@ -11,7 +11,7 @@ export default async function AdminOrdersPage() {
     ? await supabase
         .from("orders")
         .select(
-          "id, order_number, status, currency, total_minor, commission_base_minor, fx_rate_to_base, placed_at, paid_at, email, payments(status, provider_tx_ref, verified_at, verification_source, gateway_fee_minor)",
+          "id, order_number, status, currency, total_minor, commission_base_minor, fx_rate_to_base, placed_at, paid_at, email, order_items(book_code_snapshot, title_snapshot, format_snapshot, quantity, unit_price_minor, line_total_minor), payments(status, provider_tx_ref, verified_at, verification_source, gateway_fee_minor)",
         )
         .order("created_at", { ascending: false })
         .limit(100)
@@ -33,6 +33,7 @@ export default async function AdminOrdersPage() {
               <thead>
                 <tr className="border-b border-line text-[0.62rem] uppercase tracking-[0.14em] text-charcoal-soft">
                   <th className="py-2 pr-4">Order</th>
+                  <th className="py-2 pr-4">Book ID</th>
                   <th className="py-2 pr-4">Status</th>
                   <th className="py-2 pr-4">Total</th>
                   <th className="py-2 pr-4">Commission base</th>
@@ -42,6 +43,10 @@ export default async function AdminOrdersPage() {
               </thead>
               <tbody>
                 {orders.map((order) => {
+                  const items = (order.order_items ?? []) as unknown as {
+                    book_code_snapshot: string;
+                    title_snapshot: string;
+                  }[];
                   const payment = (order.payments as unknown as {
                     status: string;
                     provider_tx_ref: string;
@@ -52,6 +57,13 @@ export default async function AdminOrdersPage() {
                   return (
                     <tr key={order.id} className="border-b border-line/60">
                       <td className="py-3 pr-4 font-mono text-navy">{order.order_number}</td>
+                      <td className="py-3 pr-4 font-mono text-[0.72rem] text-charcoal">
+                        {items.map((item) => (
+                          <span key={item.book_code_snapshot} className="block">
+                            {item.book_code_snapshot}
+                          </span>
+                        ))}
+                      </td>
                       <td className="py-3 pr-4 text-charcoal">{formatLabel(order.status)}</td>
                       <td className="py-3 pr-4 text-charcoal">{formatMoney(order.total_minor, order.currency as string)}</td>
                       <td className="py-3 pr-4 text-charcoal-soft">{formatMoney(order.commission_base_minor, order.currency as string)}</td>

@@ -12,7 +12,7 @@ export default async function AuthorBooksPage() {
   const { data: books } = supabase
     ? await supabase
         .from("books")
-        .select("id, title, status, submitted_at, reviewed_at, review_note, published_at, updated_at")
+        .select("id, book_code, title, status, submitted_at, reviewed_at, review_note, published_at, updated_at")
         .order("updated_at", { ascending: false })
     : { data: null };
 
@@ -45,6 +45,9 @@ export default async function AuthorBooksPage() {
                   <Link href={`/author/books/${book.id}`} className="text-[0.95rem] text-navy hover:underline">
                     {book.title}
                   </Link>
+                  <p className="mt-1 font-mono text-[0.7rem] tracking-[0.04em] text-charcoal-soft">
+                    {book.book_code ?? "Pending"}
+                  </p>
                   <p className="mt-1 text-[0.72rem] text-charcoal-soft">
                     {formatLabel(book.status)}
                     {book.submitted_at ? ` · submitted ${formatDate(book.submitted_at)}` : ""}
