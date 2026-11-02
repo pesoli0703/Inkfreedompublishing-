@@ -57,7 +57,18 @@ describe("public catalogue has no bundled sample data", () => {
 
   it("no page labels the catalogue as sample or preview content", () => {
     const offenders = sourceFiles.filter((path) =>
-      /sample catalogue|preview catalogue|sample data for the preview/i.test(
+      /sample catalogue|preview catalogue|sample data for the preview|sample set of titles/i.test(
+        read(path),
+      ),
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it("no page claims Supabase or Flutterwave are not connected", () => {
+    // Both are connected in production. Payments are switched off by a
+    // platform setting, which is not the same thing.
+    const offenders = sourceFiles.filter((path) =>
+      /supabase pending|flutterwave pending|not connected \(supabase|not connected \(flutterwave/i.test(
         read(path),
       ),
     );
