@@ -109,7 +109,7 @@ begin
   v_allowed := case v_w.status
     when 'requested' then p_to in ('under_review','approved','rejected','cancelled')
     when 'under_review' then p_to in ('approved','rejected')
-    when 'approved' then p_to in ('processing','rejected','failed')
+    when 'approved' then p_to in ('processing','paid','rejected','failed')
     when 'processing' then p_to in ('paid','failed')
     else false end;
   if not v_allowed then
@@ -146,7 +146,8 @@ begin
   insert into public.withdrawal_events (withdrawal_id, from_status, to_status, actor_id, note)
   values (p_withdrawal_id, v_w.status, p_to, auth.uid(), p_note);
 
-  perform private.notify_user(v_w.author_id,
+  perform private.notify_user(
+    (select ap.user_id from public.author_profiles ap where ap.id = v_w.author_id),
     case when p_to = 'paid' then 'withdrawal_paid'::public.notification_type
          when p_to = 'approved' then 'withdrawal_approved'::public.notification_type
          else 'withdrawal_requested'::public.notification_type end,
