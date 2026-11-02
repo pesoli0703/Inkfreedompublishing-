@@ -13,7 +13,7 @@ export default async function AdminBooksPage() {
   const { data: books } = supabase
     ? await supabase
         .from("books")
-        .select("id, title, slug, status, submitted_at, review_note, is_featured, published_at, author_profiles(pen_name)")
+        .select("id, book_code, title, slug, status, submitted_at, review_note, is_featured, published_at, author_profiles(pen_name)")
         .order("submitted_at", { ascending: false, nullsFirst: false })
     : { data: null };
 
@@ -37,6 +37,9 @@ export default async function AdminBooksPage() {
                 const author = book.author_profiles as unknown as { pen_name: string } | null;
                 return (
                   <li key={book.id} className="border border-line p-5">
+                    <p className="font-mono text-[0.7rem] tracking-[0.04em] text-gold-deep">
+                      {book.book_code ?? "Pending"}
+                    </p>
                     <p className="font-display text-lg text-navy">{book.title}</p>
                     <p className="text-[0.75rem] text-charcoal-soft">
                       {author?.pen_name ?? "Unknown author"} · submitted {formatDate(book.submitted_at)}
@@ -74,6 +77,9 @@ export default async function AdminBooksPage() {
                 <li key={book.id} className="py-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
+                      <p className="font-mono text-[0.7rem] tracking-[0.04em] text-charcoal-soft">
+                        {book.book_code ?? "Pending"}
+                      </p>
                       <p className="text-[0.92rem] text-navy">{book.title}</p>
                       <p className="text-[0.72rem] text-charcoal-soft">
                         {formatLabel(book.status)}

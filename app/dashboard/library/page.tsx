@@ -32,7 +32,7 @@ export default async function LibraryPage({
 
   const { data: entitlements } = await supabase
     .from("entitlements")
-    .select("id, granted_at, kind, books(id, title, slug, cover_path), order_id")
+    .select("id, granted_at, kind, books(id, book_code, title, slug, cover_path), order_id")
     .is("revoked_at", null)
     .order("granted_at", { ascending: false });
 
@@ -65,12 +65,15 @@ export default async function LibraryPage({
             <ul className="divide-y divide-line">
               {rows.map((row) => {
                 const book = row.books as unknown as
-                  | { id: string; title: string; slug: string }
+                  | { id: string; book_code: string; title: string; slug: string }
                   | null;
                 return (
                   <li key={row.id} className="flex flex-wrap items-center justify-between gap-4 py-4">
                     <div>
                       <p className="text-[0.95rem] text-navy">{book?.title ?? "Book"}</p>
+                      <p className="mt-1 font-mono text-[0.7rem] tracking-[0.04em] text-charcoal-soft">
+                        {book?.book_code ?? "—"}
+                      </p>
                       <p className="mt-1 text-[0.72rem] text-charcoal-soft">
                         Added {formatDate(row.granted_at)} · {row.kind === "digital" ? "Ebook" : "Print"}
                       </p>

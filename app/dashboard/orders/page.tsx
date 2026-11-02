@@ -19,7 +19,7 @@ export default async function OrdersPage() {
   const { data: orders } = await supabase
     .from("orders")
     .select(
-      "id, order_number, status, currency, subtotal_minor, discount_minor, total_minor, placed_at, paid_at, coupon_code, order_items(title_snapshot, format_snapshot, quantity, unit_price_minor, line_total_minor), payments(status, provider, provider_tx_ref, amount_minor, currency, verified_at, verification_source)",
+      "id, order_number, status, currency, subtotal_minor, discount_minor, total_minor, placed_at, paid_at, coupon_code, order_items(book_code_snapshot, title_snapshot, format_snapshot, quantity, unit_price_minor, line_total_minor), payments(status, provider, provider_tx_ref, amount_minor, currency, verified_at, verification_source)",
     )
     .order("created_at", { ascending: false });
 
@@ -39,6 +39,7 @@ export default async function OrdersPage() {
         <div className="space-y-5">
           {orders.map((order) => {
             const items = (order.order_items ?? []) as unknown as {
+              book_code_snapshot: string;
               title_snapshot: string;
               format_snapshot: string;
               quantity: number;
@@ -80,6 +81,9 @@ export default async function OrdersPage() {
                   {items.map((item, index) => (
                     <li key={index} className="flex items-center justify-between gap-3 text-[0.85rem]">
                       <span className="text-charcoal">
+                        <span className="block font-mono text-[0.68rem] tracking-[0.04em] text-charcoal-soft">
+                          {item.book_code_snapshot}
+                        </span>
                         {item.title_snapshot}
                         <span className="text-charcoal-soft"> · {item.format_snapshot}</span>
                       </span>

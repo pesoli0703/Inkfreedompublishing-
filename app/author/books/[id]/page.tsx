@@ -17,7 +17,7 @@ export default async function AuthorBookPage({ params }: { params: Promise<{ id:
   const { data: book } = await supabase
     .from("books")
     .select(
-      "id, title, subtitle, slug, status, hook, description_paragraphs, submitted_at, reviewed_at, review_note, published_at, cover_path, rights_declared_at",
+      "id, book_code, title, subtitle, slug, status, hook, description_paragraphs, submitted_at, reviewed_at, review_note, published_at, cover_path, rights_declared_at",
     )
     .eq("id", id)
     .maybeSingle();
@@ -73,6 +73,10 @@ export default async function AuthorBookPage({ params }: { params: Promise<{ id:
               </div>
             )}
             <dl className="space-y-2 text-[0.82rem] text-charcoal">
+              <div>
+                <dt className="inline text-charcoal-soft">Book ID: </dt>
+                <dd className="inline font-mono text-navy">{book.book_code ?? "Pending"}</dd>
+              </div>
               <div>
                 <dt className="inline text-charcoal-soft">Slug: </dt>
                 <dd className="inline font-mono">{book.slug}</dd>
