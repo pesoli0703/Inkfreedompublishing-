@@ -47,7 +47,7 @@ export default async function AuthorsPage() {
               open to anyone — there is no application to wait on.
             </p>
             <Link
-              href="/author/start"
+              href="/author"
               className="mt-7 inline-flex bg-navy px-6 py-3.5 text-[0.7rem] font-semibold tracking-[0.18em] text-ivory uppercase transition-colors hover:bg-navy-soft"
             >
               Become an author
@@ -73,7 +73,7 @@ export default async function AuthorsPage() {
             </p>
           </div>
           <Link
-            href="/author/start"
+            href="/author"
             className="shrink-0 bg-navy px-7 py-4 text-[0.72rem] font-semibold tracking-[0.18em] text-ivory uppercase transition-colors hover:bg-navy-soft"
           >
             Start publishing

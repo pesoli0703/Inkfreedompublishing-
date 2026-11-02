@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { DashboardShell, Panel } from "@/components/dashboard-shell";
 import { BecomeAuthorForm } from "@/components/become-author-form";
 import { authorNav } from "@/lib/nav";
-import { requireViewer } from "@/lib/auth";
+import { requireAuthorArea } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default async function BecomeAuthorPage() {
-  const viewer = await requireViewer("/author/start");
+  const viewer = await requireAuthorArea("/author/start");
   const supabase = await createServerSupabaseClient();
   if (!supabase) redirect("/signin");
 

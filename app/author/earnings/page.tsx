@@ -1,12 +1,12 @@
 import { DashboardShell, Empty, Panel, StatGrid } from "@/components/dashboard-shell";
 import { PayoutAccountForm, WithdrawalForm } from "@/components/earnings-forms";
 import { authorNav } from "@/lib/nav";
-import { requireViewer } from "@/lib/auth";
+import { requireAuthorArea } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { formatDate, formatLabel, formatMoney } from "@/lib/format";
 
 export default async function EarningsPage() {
-  await requireViewer("/author/earnings");
+  await requireAuthorArea("/author/earnings");
   const supabase = await createServerSupabaseClient();
   if (!supabase) {
     return (

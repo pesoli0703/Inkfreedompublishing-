@@ -5,7 +5,7 @@ import {
   createTicketAction,
   replyTicketAction,
   type ActionState,
-} from "@/app/dashboard/actions";
+} from "@/app/(store)/dashboard/actions";
 import { SubmitButton } from "@/components/form-feedback";
 
 const field =

@@ -96,7 +96,7 @@ export default function PublishPage() {
                   Create an account
                 </Link>
                 <Link
-                  href="/author/start"
+                  href="/author"
                   className="inline-flex border border-navy/25 px-7 py-4 text-[0.72rem] font-semibold tracking-[0.18em] text-navy uppercase transition-colors hover:border-navy hover:bg-navy/5"
                 >
                   I already have an account
@@ -273,7 +273,7 @@ export default function PublishPage() {
                   Create an account
                 </Link>
                 <Link
-                  href="/author/start"
+                  href="/author"
                   className="inline-flex border border-navy/25 px-6 py-3.5 text-[0.7rem] font-semibold tracking-[0.18em] text-navy uppercase transition-colors hover:border-navy"
                 >
                   Become an author

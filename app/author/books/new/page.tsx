@@ -1,12 +1,12 @@
 import { DashboardShell, Panel } from "@/components/dashboard-shell";
 import { NewBookForm } from "@/components/new-book-form";
 import { authorNav } from "@/lib/nav";
-import { requireViewer } from "@/lib/auth";
+import { requireAuthorArea } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
 export default async function NewBookPage() {
-  const viewer = await requireViewer("/author/books/new");
+  const viewer = await requireAuthorArea("/author/books/new");
   const supabase = await createServerSupabaseClient();
   if (!supabase) redirect("/author");
 

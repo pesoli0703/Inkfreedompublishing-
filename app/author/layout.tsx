@@ -1,13 +1,34 @@
-import type { Metadata } from "next";
-import type { ReactNode } from "react";
-import { requireViewer } from "@/lib/auth";
+import { PortalFooter, PortalHeader } from "@/components/portal-header";
+import { getViewer } from "@/lib/auth";
 
-export const metadata: Metadata = {
-  title: "Author dashboard",
-  robots: { index: false, follow: false },
-};
+const items = [
+  { href: "/author", label: "Overview" },
+  { href: "/author/books", label: "My books" },
+  { href: "/author/earnings", label: "Sales & earnings" },
+  { href: "/author/settings", label: "Profile" },
+];
 
-export default async function AuthorLayout({ children }: { children: ReactNode }) {
-  await requireViewer("/author");
-  return <>{children}</>;
+const links = [
+  { href: "/", label: "View the bookstore" },
+  { href: "/author-agreement", label: "Author agreement" },
+  { href: "/publish", label: "How publishing works" },
+];
+
+export default async function AuthorLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
+  const viewer = await getViewer();
+
+  return (
+    <>
+      <PortalHeader
+        portal="author"
+        items={items}
+        links={links}
+        viewer={viewer ? { name: viewer.fullName ?? "", email: viewer.email } : null}
+      />
+      {children}
+      <PortalFooter portal="author" links={links} />
+    </>
+  );
 }

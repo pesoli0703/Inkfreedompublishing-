@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { updateProfileAction, type ActionState } from "@/app/dashboard/actions";
+import { updateProfileAction, type ActionState } from "@/app/(store)/dashboard/actions";
 import { SubmitButton } from "@/components/form-feedback";
 
 const field =
