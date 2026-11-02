@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SectionHeading } from "@/components/section-heading";
-import { SubmissionForm } from "@/components/submission-form";
 
 export const metadata: Metadata = {
   title: "Publish With Us",
@@ -100,9 +99,10 @@ export default function PublishPage() {
               <div className="border border-gold/40 bg-gold/8 p-6">
                 <p className="eyebrow text-gold-deep">Please note</p>
                 <p className="mt-3 text-[0.85rem] leading-relaxed text-charcoal-soft">
-                  Submissions, file uploads and author accounts are not connected
-                  in this preview build. The form below is a design preview and
-                  does not send anything.
+                  Applications are open. Create an account, apply from your
+                  dashboard, and once an editor approves you the manuscript and
+                  cover uploads open on your author dashboard. We do not ask for a
+                  fee to submit.
                 </p>
               </div>
             </div>
@@ -194,9 +194,10 @@ export default function PublishPage() {
             <div id="terms" className="mt-8 scroll-mt-24 border border-line bg-ivory p-5">
               <p className="eyebrow text-charcoal-soft">Author terms</p>
               <p className="mt-2.5 text-[0.8rem] leading-relaxed text-charcoal-soft">
-                Draft only. The author agreement — covering rights, royalties,
-                production responsibilities and termination — will be published
-                here in full before submissions open.
+                Commission is fixed at 90% to the author and 10% to the platform,
+                before separately charged gateway fees. The full author agreement
+                — covering rights, royalties, production responsibilities and
+                termination — is published separately.
               </p>
               <Link
                 href="/policies#terms"
@@ -207,7 +208,54 @@ export default function PublishPage() {
             </div>
           </div>
           <div className="lg:col-span-8">
-            <SubmissionForm />
+            <div className="border border-line bg-white p-6 sm:p-9">
+              <h2 className="font-display text-2xl text-navy">How to apply</h2>
+              <ol className="mt-5 space-y-4 text-[0.9rem] leading-relaxed text-charcoal-soft">
+                <li className="flex gap-4">
+                  <span className="font-display text-sm tracking-[0.18em] text-gold-deep">01</span>
+                  <span>
+                    Create an account — reader accounts are opened immediately.
+                  </span>
+                </li>
+                <li className="flex gap-4">
+                  <span className="font-display text-sm tracking-[0.18em] text-gold-deep">02</span>
+                  <span>
+                    Apply from your dashboard with your pen name, a bio, what you
+                    write and where you are based.
+                  </span>
+                </li>
+                <li className="flex gap-4">
+                  <span className="font-display text-sm tracking-[0.18em] text-gold-deep">03</span>
+                  <span>
+                    An editor reads the application and records a decision. You
+                    can see the outcome and any note on your dashboard.
+                  </span>
+                </li>
+                <li className="flex gap-4">
+                  <span className="font-display text-sm tracking-[0.18em] text-gold-deep">04</span>
+                  <span>
+                    Once approved, upload the manuscript, cover and prices from the
+                    author dashboard. Every book still passes through approval
+                    before it appears in the catalogue.
+                  </span>
+                </li>
+              </ol>
+
+              <div className="mt-8 flex flex-wrap gap-3 border-t border-line pt-6">
+                <Link
+                  href="/register"
+                  className="inline-flex bg-navy px-6 py-3.5 text-[0.7rem] font-semibold tracking-[0.18em] text-ivory uppercase transition-colors hover:bg-navy-soft"
+                >
+                  Create an account
+                </Link>
+                <Link
+                  href="/author/apply"
+                  className="inline-flex border border-navy/25 px-6 py-3.5 text-[0.7rem] font-semibold tracking-[0.18em] text-navy uppercase transition-colors hover:border-navy"
+                >
+                  Go to the application
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>

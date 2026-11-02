@@ -1,7 +1,4 @@
-import { authors, getAuthor } from "./data/authors";
-import { books } from "./data/books";
-import { categories } from "./data/categories";
-import type { Book, CategorySlug } from "./data/types";
+import type { Book, Category } from "./data/types";
 
 export type SortKey = "curated" | "price-asc" | "price-desc" | "title";
 
@@ -12,50 +9,22 @@ export const sortOptions: { value: SortKey; label: string }[] = [
   { value: "price-desc", label: "Price: high to low" },
 ];
 
-export const getBook = (slug: string) => books.find((book) => book.slug === slug);
+/**
+ * Pure helpers over catalogue records. These take the list they should work on:
+ * nothing here reads a bundled dataset, so the public pages can only ever
+ * render titles that exist in the database.
+ */
 
-export const getCategory = (slug: string) =>
-  categories.find((category) => category.slug === slug);
+export const categoryName = (categories: Category[], slug: string) =>
+  categories.find((category) => category.slug === slug)?.name ?? "Catalogue";
 
-export const categoryName = (slug: CategorySlug) =>
-  getCategory(slug)?.name ?? "Catalogue";
-
-export const booksByAuthor = (authorSlug: string) =>
-  books.filter((book) => book.authorSlug === authorSlug);
-
-export const authorName = (authorSlug: string) =>
-  getAuthor(authorSlug)?.name ?? "INKFREEDOMPUBLISHING";
-
-export const featuredBooks = [...books]
-  .sort((a, b) => a.order - b.order)
-  .slice(0, 4);
-
-export const featuredAuthors = authors.filter((author) => author.featured);
-
-export const categoryCounts = () =>
-  categories.map((category) => ({
-    ...category,
-    count: books.filter((book) => book.category === category.slug).length,
-  }));
-
-export const relatedBooks = (book: Book, limit = 3) =>
-  books
-    .filter((candidate) => candidate.slug !== book.slug)
-    .sort((a, b) => {
-      const score = (candidate: Book) =>
-        (candidate.category === book.category ? 2 : 0) +
-        (candidate.authorSlug === book.authorSlug ? 1 : 0);
-      return score(b) - score(a);
-    })
-    .slice(0, limit);
+export const authorName = (book: Book) =>
+  book.authorName || "INKFREEDOMPUBLISHING";
 
 const normalise = (value: string) => value.trim().toLowerCase();
 
-/** Loose catalogue search across titles, authors, categories and themes. */
-export const searchBooks = (
-  query: string,
-  list: Book[] = books,
-): Book[] => {
+/** Loose search across titles, authors, categories and themes. */
+export const searchBooks = (query: string, list: Book[]): Book[] => {
   const term = normalise(query);
   if (!term) return list;
 
@@ -68,26 +37,14 @@ export const searchBooks = (
       book.hook,
       book.description.join(" "),
       book.themes.join(" "),
-      authorName(book.authorSlug),
-      categoryName(book.category),
+      book.authorName,
+      book.bookCode ?? "",
     ]
       .join(" ")
       .toLowerCase();
 
     return words.every((word) => haystack.includes(word));
   });
-};
-
-/** Authors matching a query, used by the search results summary. */
-export const searchAuthors = (query: string) => {
-  const term = normalise(query);
-  if (!term) return [];
-  return authors.filter((author) =>
-    [author.name, author.tagline, author.writingIn, author.based]
-      .join(" ")
-      .toLowerCase()
-      .includes(term),
-  );
 };
 
 export const sortBooks = (list: Book[], sort: SortKey): Book[] => {
@@ -105,19 +62,17 @@ export const sortBooks = (list: Book[], sort: SortKey): Book[] => {
   }
 };
 
-export const browseBooks = ({
-  q = "",
-  category,
-  sort = "curated",
-}: {
-  q?: string;
-  category?: string;
-  sort?: SortKey;
-}) => {
-  let list = searchBooks(q);
-  const validCategory = categories.find((item) => item.slug === category);
-  if (validCategory) {
-    list = list.filter((book) => book.category === validCategory.slug);
+export const browseBooks = (
+  list: Book[],
+  {
+    q = "",
+    category,
+    sort = "curated",
+  }: { q?: string; category?: string; sort?: SortKey },
+) => {
+  let results = searchBooks(q, list);
+  if (category) {
+    results = results.filter((book) => book.category === category);
   }
-  return sortBooks(list, sort);
+  return sortBooks(results, sort);
 };

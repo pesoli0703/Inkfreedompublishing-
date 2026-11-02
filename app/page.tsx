@@ -5,13 +5,7 @@ import { AuthorCard } from "@/components/author-card";
 import { SearchBar } from "@/components/search-bar";
 import { SectionHeading } from "@/components/section-heading";
 import { NewsletterForm } from "@/components/newsletter-form";
-import {
-  authorName,
-  categoryCounts,
-  featuredAuthors,
-  featuredBooks,
-} from "@/lib/catalogue";
-import { books } from "@/lib/data/books";
+import { loadCategories, loadLiveAuthors, loadLiveCatalogue } from "@/lib/catalogue-live";
 import { formatPrice } from "@/lib/format";
 
 const publishingSteps = [
@@ -56,10 +50,20 @@ const commitments = [
   },
 ];
 
-export default function HomePage() {
+export const revalidate = 300;
+
+export default async function HomePage() {
+  const [catalogue, categories, authors] = await Promise.all([
+    loadLiveCatalogue(),
+    loadCategories(),
+    loadLiveAuthors(),
+  ]);
+
+  const featuredBooks = catalogue.slice(0, 4);
+  const featuredAuthors = authors.filter((author) => author.titles > 0).slice(0, 4);
   const lead = featuredBooks[0];
   const shelf = featuredBooks.slice(0, 3);
-  const catalogueCount = books.length;
+  const catalogueCount = catalogue.length;
 
   return (
     <>
@@ -96,7 +100,7 @@ export default function HomePage() {
             <div className="mt-9 max-w-xl">
               <SearchBar />
               <p className="mt-3 text-xs text-charcoal-soft">
-                Search the sample catalogue by title, author, category or theme.
+                Search the catalogue by title, author, category or theme.
               </p>
             </div>
 
@@ -118,7 +122,7 @@ export default function HomePage() {
             <dl className="mt-12 grid max-w-lg grid-cols-3 gap-6 border-t border-line pt-6">
               <div>
                 <dt className="text-[0.65rem] tracking-[0.16em] text-charcoal-soft uppercase">
-                  Sample titles
+                  Published titles
                 </dt>
                 <dd className="mt-1 font-display text-2xl text-navy">
                   {catalogueCount}
@@ -128,7 +132,9 @@ export default function HomePage() {
                 <dt className="text-[0.65rem] tracking-[0.16em] text-charcoal-soft uppercase">
                   Categories
                 </dt>
-                <dd className="mt-1 font-display text-2xl text-navy">6</dd>
+                <dd className="mt-1 font-display text-2xl text-navy">
+                  {categories.length}
+                </dd>
               </div>
               <div>
                 <dt className="text-[0.65rem] tracking-[0.16em] text-charcoal-soft uppercase">
@@ -143,6 +149,27 @@ export default function HomePage() {
 
           {/* Editorial cover plate */}
           <div className="lg:col-span-6">
+            {shelf.length === 0 ? (
+              <div className="relative mx-auto flex max-w-xl flex-col items-center justify-center border border-line bg-white/60 px-8 py-16 text-center">
+                <span
+                  aria-hidden="true"
+                  className="h-16 w-px bg-gold/60"
+                />
+                <p className="mt-6 font-display text-xl leading-snug text-navy">
+                  The first titles are being prepared for the shelf.
+                </p>
+                <p className="mt-3 max-w-sm text-[0.85rem] leading-relaxed text-charcoal-soft">
+                  Our catalogue opens with its first published books. Authors can
+                  apply, upload a manuscript and go through editorial review now.
+                </p>
+                <Link
+                  href="/publish"
+                  className="mt-7 inline-flex items-center gap-2 border border-navy/25 px-6 py-3.5 text-[0.7rem] font-semibold tracking-[0.18em] text-navy uppercase transition-colors hover:border-navy hover:bg-navy/5"
+                >
+                  Publish with us
+                </Link>
+              </div>
+            ) : (
             <div className="relative mx-auto max-w-xl">
               <div
                 aria-hidden="true"
@@ -162,7 +189,7 @@ export default function HomePage() {
                     >
                       <Link
                         href={`/books/${book.slug}`}
-                        aria-label={`${book.title} — ${authorName(book.authorSlug)}`}
+                        aria-label={`${book.title} — ${book.authorName}`}
                         className="block"
                       >
                         <BookCover book={book} priority decorative />
@@ -177,10 +204,11 @@ export default function HomePage() {
                   Featured this season
                 </p>
                 <p className="text-[0.66rem] tracking-[0.14em] text-charcoal-soft uppercase">
-                  {lead ? formatPrice(lead.price) : ""} and up
+                  {lead ? `${formatPrice(lead.price)} and up` : ""}
                 </p>
               </div>
             </div>
+            )}
           </div>
         </div>
       </section>
@@ -206,15 +234,17 @@ export default function HomePage() {
       </section>
 
       {/* ----------------------------------------------------- Featured books */}
-      <section className="container-editorial py-16 sm:py-20 lg:py-24">
-        <SectionHeading
-          eyebrow="Featured books"
-          title="A shelf built with intent"
-          description="Selected from the current catalogue. Titles, covers and descriptions shown here are sample data for the preview build."
-          action={{ href: "/books", label: "All books" }}
-        />
-        <BookGrid books={featuredBooks} className="mt-12" />
-      </section>
+      {featuredBooks.length > 0 ? (
+        <section className="container-editorial py-16 sm:py-20 lg:py-24">
+          <SectionHeading
+            eyebrow="Featured books"
+            title="A shelf built with intent"
+            description="Selected from the current catalogue."
+            action={{ href: "/books", label: "All books" }}
+          />
+          <BookGrid books={featuredBooks} className="mt-12" />
+        </section>
+      ) : null}
 
       {/* ---------------------------------------------------------- Categories */}
       <section className="border-y border-line bg-ivory-deep/70">
@@ -222,12 +252,12 @@ export default function HomePage() {
           <SectionHeading
             eyebrow="Browse by category"
             title="Find the shelf you came for"
-            description="Six areas of the list, from literary fiction to illustrated books for younger readers."
+            description="Every shelf on the list, from literary fiction to illustrated books for younger readers."
             action={{ href: "/categories", label: "All categories" }}
           />
 
           <div className="mt-12 grid gap-px border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
-            {categoryCounts().map((category) => (
+            {categories.map((category) => (
               <Link
                 key={category.slug}
                 href={`/books?category=${category.slug}`}
@@ -238,7 +268,9 @@ export default function HomePage() {
                     {category.name}
                   </h3>
                   <span className="mt-1 shrink-0 text-[0.65rem] tracking-[0.14em] text-charcoal-soft uppercase">
-                    {category.count} {category.count === 1 ? "title" : "titles"}
+                    {category.count === 0
+                      ? "Opening soon"
+                      : `${category.count} ${category.count === 1 ? "title" : "titles"}`}
                   </span>
                 </div>
                 <p className="text-[0.88rem] leading-relaxed text-charcoal-soft">
@@ -264,19 +296,21 @@ export default function HomePage() {
       </section>
 
       {/* ------------------------------------------------------ Featured authors */}
-      <section className="container-editorial py-16 sm:py-20 lg:py-24">
-        <SectionHeading
-          eyebrow="Featured authors"
-          title="The people on the list"
-          description="Sample author profiles created for this preview. Real biographies will replace them when the catalogue is supplied."
-          action={{ href: "/authors", label: "All authors" }}
-        />
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {featuredAuthors.map((author) => (
-            <AuthorCard key={author.slug} author={author} />
-          ))}
-        </div>
-      </section>
+      {featuredAuthors.length > 0 ? (
+        <section className="container-editorial py-16 sm:py-20 lg:py-24">
+          <SectionHeading
+            eyebrow="Featured authors"
+            title="The people on the list"
+            description="Writers published on INKFREEDOMPUBLISHING."
+            action={{ href: "/authors", label: "All authors" }}
+          />
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {featuredAuthors.map((author) => (
+              <AuthorCard key={author.slug} author={author} />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {/* ------------------------------------------------ How publishing works */}
       <section className="bg-navy text-ivory">
@@ -319,8 +353,9 @@ export default function HomePage() {
                 ))}
               </ol>
               <p className="mt-6 text-[0.72rem] text-ivory/55">
-                Author dashboards, submission tracking and royalty payments are
-                not connected in this preview build.
+                Author dashboards and manuscript tracking are live. Customer
+                payments are switched off until the purchase and download journey
+                has been signed off.
               </p>
             </div>
           </div>
@@ -423,8 +458,8 @@ export default function HomePage() {
                   </div>
                 </dl>
                 <p className="mt-6 border-t border-line pt-4 text-[0.72rem] leading-relaxed text-charcoal-soft">
-                  The submission form is an interface preview only — no file
-                  uploads or accounts are connected yet.
+                  Applications are reviewed by an editor. Once approved, you can
+                  upload your manuscript and cover from your author dashboard.
                 </p>
               </div>
             </div>
