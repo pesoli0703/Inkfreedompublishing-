@@ -24,7 +24,7 @@ export const readerNav = (counts?: { orders?: number; wishlist?: number; unread?
   },
   {
     label: "Publishing",
-    items: [{ href: "/publish", label: "Become an author" }],
+    items: [{ href: "/author/start", label: "Become an author" }],
   },
 ];
 

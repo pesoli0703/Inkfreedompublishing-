@@ -69,9 +69,9 @@ export function SiteFooter() {
             <div>
               <h2 className="eyebrow text-ivory/55">Contact</h2>
               <p className="mt-3 max-w-sm text-sm leading-relaxed text-ivory/60">
-                Publishing enquiries go through the author application, which
-                records each request and its decision. For orders, downloads and
-                copyright notices, use the routes on the{" "}
+                Publishing is self-service — create an account, choose a pen name
+                and upload your book. For orders, downloads and copyright
+                notices, use the routes on the{" "}
                 <Link href="/contact" className="text-ivory/85 underline">
                   contact page
                 </Link>

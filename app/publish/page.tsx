@@ -3,67 +3,58 @@ import Link from "next/link";
 import { SectionHeading } from "@/components/section-heading";
 
 export const metadata: Metadata = {
-  title: "Publish With Us",
+  title: "Publish & Sell Your eBooks",
   description:
-    "How publishing works at INKFREEDOMPUBLISHING — submission, editorial review, design, production and sales for independent authors.",
+    "Self-publish on INKFREEDOMPUBLISHING: create an account, upload your eBook, set your price and submit for approval. No application fee, no publishing contract.",
 };
 
-const stages = [
+const steps = [
   {
     number: "01",
-    title: "Submission",
-    lead: "You send the book, not just an idea.",
-    body: "A synopsis, a short author note and a sample chapter or poem sequence. We accept work in English and in translation where rights are clear. There is no fee to submit.",
-    detail: ["Synopsis of 200–400 words", "Sample of 2,000–4,000 words", "Author note, 100 words"],
+    title: "Create an account",
+    body: "Register with your email address and open your author workspace immediately. No application, no interview, nobody deciding whether you are allowed to write.",
+    detail: ["Email and password", "Workspace opens straight away"],
   },
   {
     number: "02",
-    title: "Editorial review",
-    lead: "An editor reads it properly.",
-    body: "We assess fit with the list, structure and readiness. If a manuscript needs a development pass before publication, we tell you what we think the book needs and quote that work separately.",
-    detail: ["Response either way", "Structural notes where useful", "No obligation to publish"],
+    title: "Upload your eBook",
+    body: "Add your title, description, cover image and the book itself as a PDF or EPUB. Files are stored privately and only ever served to a reader after a verified purchase.",
+    detail: ["Cover image", "PDF or EPUB manuscript"],
   },
   {
     number: "03",
-    title: "Design & production",
-    lead: "The book gets its clothes.",
-    body: "Cover design, typesetting, proof rounds and production files are handled in-house. You approve the cover and the final proofs before anything goes to print.",
-    detail: ["Cover design", "Typesetting & proofs", "Print and ebook files"],
+    title: "Set your price",
+    body: "Choose your selling price in naira. We convert it for readers in other currencies using the daily rate table, and you can see every converted price before you publish.",
+    detail: ["You set one NGN price", "Other currencies converted for you"],
   },
   {
     number: "04",
-    title: "Publication & sales",
-    lead: "On the shelf, and paid properly.",
-    body: "We list the title on this marketplace in print and digital editions. Royalty terms are agreed in writing before production starts, and payments will run through Flutterwave once that integration goes live.",
-    detail: ["Listing on the marketplace", "Royalty schedule in writing", "Payments via Flutterwave (pending)"],
+    title: "Submit for approval",
+    body: "Our admin team reviews the book. Once approved it appears in the public bookstore, and readers can buy it — this check protects readers, and it protects you.",
+    detail: ["Reviewed by an administrator", "Live in the bookstore once approved"],
   },
-];
-
-const accepted = [
-  { category: "Literary fiction", detail: "Novels and story collections, 60,000–110,000 words." },
-  { category: "Poetry", detail: "Full collections, 48–96 pages." },
-  { category: "Essays & criticism", detail: "Proposals with two sample essays and a contents plan." },
-  { category: "Memoir & biography", detail: "Proposals with two sample chapters." },
-  { category: "Business & leadership", detail: "Practitioner books with a clear reader and a clear use." },
-  { category: "Children & young readers", detail: "Picture books and early readers, with or without artwork." },
 ];
 
 const faqs = [
   {
     q: "Do I pay to publish?",
-    a: "There is no fee to submit. Where a manuscript needs significant development work before publication, that is quoted transparently and agreed before anything begins. Commercial terms will be set out in writing in the author agreement.",
+    a: "No. There is no application fee and no publishing fee. We take 10% of each sale and you keep 90%, before the payment gateway's own fees are charged separately.",
   },
   {
-    q: "Do I keep the rights to my book?",
-    a: "Rights are licensed per title, not assigned wholesale, and the licence terms are agreed before production starts. The full author agreement will be published on this site before submissions open fully.",
+    q: "Do I sign a publishing contract?",
+    a: "No publishing contract and no rights transfer. You keep the copyright to your work. We hold only a non-exclusive licence to sell the editions you upload, while they are listed here — you can withdraw a title at any time and publish it anywhere else.",
   },
   {
-    q: "Is the submission form live?",
-    a: "Not yet. This build shows the intended submission interface. The form, file uploads and submissions inbox are not connected, so nothing is transmitted or stored when you submit it here.",
+    q: "Who approves my book?",
+    a: "An administrator checks every submission before it goes on sale. That review covers the basics — that the files are readable, the listing is complete and the book is yours to sell. You are not being judged on whether your writing deserves to exist.",
   },
   {
-    q: "How long does publication take?",
-    a: "Timelines depend on the state of the manuscript and the number of titles in production. Once a book is accepted we agree a production schedule with you in writing.",
+    q: "How soon is my book live?",
+    a: "As soon as an administrator approves it. There is no production queue, no typesetting and no print run to wait for — it is your file, uploaded and listed.",
+  },
+  {
+    q: "What do I earn?",
+    a: "90% of the sale price on every copy sold, held in your author balance and paid out to your bank account. The figure is recorded per order line, so nothing is rounded in our favour.",
   },
 ];
 
@@ -79,30 +70,52 @@ export default function PublishPage() {
             <span aria-hidden="true" className="mx-2">
               /
             </span>
-            <span className="text-navy">Publish with us</span>
+            <span className="text-navy">Publish</span>
           </nav>
 
           <div className="mt-10 grid gap-10 lg:grid-cols-12 lg:gap-16">
             <div className="lg:col-span-7">
               <p className="eyebrow text-gold-deep">For independent authors</p>
               <h1 className="mt-4 font-display text-4xl leading-[1.04] text-navy sm:text-5xl lg:text-[3.4rem]">
-                How publishing
-                <span className="block italic text-gold-deep">works here.</span>
+                Publish and sell
+                <span className="block italic text-gold-deep">
+                  your eBooks here.
+                </span>
               </h1>
               <p className="mt-6 max-w-xl text-[0.97rem] leading-relaxed text-charcoal-soft">
-                Four stages, one editor, and terms agreed before production.
-                We are building this process for writers who want a publisher
-                rather than a platform.
+                You write your book, upload it, set your price and earn from every
+                sale. No application fee. No publishing contract. No waiting for
+                an editor to accept you.
               </p>
+
+              <div className="mt-9 flex flex-wrap gap-3">
+                <Link
+                  href="/register"
+                  className="inline-flex bg-navy px-7 py-4 text-[0.72rem] font-semibold tracking-[0.18em] text-ivory uppercase transition-colors hover:bg-navy-soft"
+                >
+                  Create an account
+                </Link>
+                <Link
+                  href="/author/start"
+                  className="inline-flex border border-navy/25 px-7 py-4 text-[0.72rem] font-semibold tracking-[0.18em] text-navy uppercase transition-colors hover:border-navy hover:bg-navy/5"
+                >
+                  I already have an account
+                </Link>
+              </div>
             </div>
+
             <div className="lg:col-span-5 lg:pt-10">
               <div className="border border-gold/40 bg-gold/8 p-6">
-                <p className="eyebrow text-gold-deep">Please note</p>
-                <p className="mt-3 text-[0.85rem] leading-relaxed text-charcoal-soft">
-                  Applications are open. Create an account, apply from your
-                  dashboard, and once an editor approves you the manuscript and
-                  cover uploads open on your author dashboard. We do not ask for a
-                  fee to submit.
+                <p className="eyebrow text-gold-deep">You are in control</p>
+                <p className="mt-3 text-[0.9rem] leading-relaxed text-charcoal">
+                  You keep the rights to your work. We take 10% of each sale and
+                  you keep 90%. Every book is checked by an administrator before
+                  it goes on sale, and you can unpublish a title at any time.
+                </p>
+                <p className="mt-4 border-t border-gold/30 pt-4 text-[0.78rem] leading-relaxed text-charcoal-soft">
+                  Card payments open once the purchase and download journey has
+                  been verified end to end. Until then your book can be uploaded,
+                  approved and listed.
                 </p>
               </div>
             </div>
@@ -111,22 +124,25 @@ export default function PublishPage() {
       </section>
 
       <section className="container-editorial py-16 sm:py-20">
-        <SectionHeading eyebrow="The process" title="From manuscript to marketplace" />
+        <SectionHeading
+          eyebrow="The process"
+          title="How self-publishing works"
+          description="Four steps, no gatekeepers between you and your reader."
+        />
         <div className="mt-12 grid gap-6 sm:grid-cols-2">
-          {stages.map((stage) => (
-            <article key={stage.number} className="border border-line bg-white p-7 sm:p-9">
+          {steps.map((step) => (
+            <article key={step.number} className="border border-line bg-white p-7 sm:p-9">
               <div className="flex items-baseline gap-4">
                 <span className="font-display text-sm tracking-[0.2em] text-gold-deep">
-                  {stage.number}
+                  {step.number}
                 </span>
-                <h3 className="font-display text-2xl text-navy">{stage.title}</h3>
+                <h3 className="font-display text-2xl text-navy">{step.title}</h3>
               </div>
-              <p className="mt-3 font-display text-lg text-charcoal">{stage.lead}</p>
-              <p className="mt-3 text-[0.9rem] leading-relaxed text-charcoal-soft">
-                {stage.body}
+              <p className="mt-4 text-[0.92rem] leading-relaxed text-charcoal-soft">
+                {step.body}
               </p>
               <ul className="mt-5 space-y-2 border-t border-line pt-4">
-                {stage.detail.map((item) => (
+                {step.detail.map((item) => (
                   <li
                     key={item}
                     className="flex items-start gap-2.5 text-[0.8rem] text-charcoal-soft"
@@ -146,98 +162,106 @@ export default function PublishPage() {
 
       <section className="border-y border-line bg-ivory-deep/70">
         <div className="container-editorial py-16 sm:py-20">
-          <SectionHeading
-            eyebrow="What we are reading"
-            title="Currently open to"
-            description="We keep the list small so each title gets proper attention."
-          />
-          <div className="mt-10 overflow-hidden border border-line bg-ivory">
-            <table className="w-full text-left text-sm">
-              <caption className="sr-only">
-                Categories currently open to submissions and their requirements
-              </caption>
-              <thead className="bg-white">
-                <tr>
-                  <th scope="col" className="px-5 py-4 text-[0.65rem] tracking-[0.16em] text-charcoal-soft uppercase sm:px-7">
-                    Category
-                  </th>
-                  <th scope="col" className="px-5 py-4 text-[0.65rem] tracking-[0.16em] text-charcoal-soft uppercase sm:px-7">
-                    What to send
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {accepted.map((row) => (
-                  <tr key={row.category} className="border-t border-line">
-                    <th scope="row" className="px-5 py-4 align-top font-display text-base font-medium text-navy sm:px-7">
-                      {row.category}
-                    </th>
-                    <td className="px-5 py-4 align-top text-charcoal-soft sm:px-7">
-                      {row.detail}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid gap-10 lg:grid-cols-12 lg:gap-16">
+            <div className="lg:col-span-5">
+              <SectionHeading
+                eyebrow="The money"
+                title="You keep 90%"
+                description="Clear terms, stated before you upload anything."
+              />
+            </div>
+            <div className="lg:col-span-7">
+              <div className="overflow-hidden border border-line bg-ivory">
+                <table className="w-full text-left text-sm">
+                  <caption className="sr-only">
+                    Author earnings on a ₦5,000 sale
+                  </caption>
+                  <tbody>
+                    <tr className="border-b border-line">
+                      <th scope="row" className="px-5 py-4 font-normal text-charcoal-soft sm:px-7">
+                        Reader pays
+                      </th>
+                      <td className="px-5 py-4 text-right font-display text-lg text-navy sm:px-7">
+                        ₦5,000
+                      </td>
+                    </tr>
+                    <tr className="border-b border-line">
+                      <th scope="row" className="px-5 py-4 font-normal text-charcoal-soft sm:px-7">
+                        You earn (90%)
+                      </th>
+                      <td className="px-5 py-4 text-right font-display text-lg text-navy sm:px-7">
+                        ₦4,500
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row" className="px-5 py-4 font-normal text-charcoal-soft sm:px-7">
+                        Platform fee (10%)
+                      </th>
+                      <td className="px-5 py-4 text-right text-charcoal-soft sm:px-7">
+                        ₦500
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-4 text-[0.78rem] leading-relaxed text-charcoal-soft">
+                Payment-gateway fees and any refunds are charged separately and
+                shown on your statement. You never set converted prices — we
+                convert your naira price for readers in other currencies and
+                record the rate and the date it was used.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
       <section id="submit" className="container-editorial scroll-mt-24 py-16 sm:py-20">
         <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
-          <div className="lg:col-span-4">
+          <div className="lg:col-span-5">
             <SectionHeading
-              eyebrow="Submit"
-              title="Start a submission"
-              description="A short proposal is enough for a first read. We reply to every submission."
+              eyebrow="Start"
+              title="Open your author workspace"
+              description="Sign in, choose the name that appears on your books, and upload your first title."
             />
             <div id="terms" className="mt-8 scroll-mt-24 border border-line bg-ivory p-5">
               <p className="eyebrow text-charcoal-soft">Author terms</p>
               <p className="mt-2.5 text-[0.8rem] leading-relaxed text-charcoal-soft">
-                Commission is fixed at 90% to the author and 10% to the platform,
-                before separately charged gateway fees. The full author agreement
-                — covering rights, royalties, production responsibilities and
-                termination — is published separately.
+                A non-exclusive licence, not a publishing contract: you keep the
+                copyright, we may sell the editions you upload, and you can
+                withdraw a title whenever you like. Commission is 90% to you and
+                10% to the platform.
               </p>
               <Link
-                href="/policies#terms"
+                href="/author-agreement"
                 className="mt-3 inline-block text-[0.7rem] font-semibold tracking-[0.14em] text-gold-deep uppercase hover:text-navy"
               >
-                Read the site policies →
+                Read the author terms →
               </Link>
             </div>
           </div>
-          <div className="lg:col-span-8">
+          <div className="lg:col-span-7">
             <div className="border border-line bg-white p-6 sm:p-9">
-              <h2 className="font-display text-2xl text-navy">How to apply</h2>
+              <h2 className="font-display text-2xl text-navy">Ready to publish?</h2>
               <ol className="mt-5 space-y-4 text-[0.9rem] leading-relaxed text-charcoal-soft">
                 <li className="flex gap-4">
                   <span className="font-display text-sm tracking-[0.18em] text-gold-deep">01</span>
-                  <span>
-                    Create an account — reader accounts are opened immediately.
-                  </span>
+                  <span>Create an account with your email address.</span>
                 </li>
                 <li className="flex gap-4">
                   <span className="font-display text-sm tracking-[0.18em] text-gold-deep">02</span>
                   <span>
-                    Apply from your dashboard with your pen name, a bio, what you
-                    write and where you are based.
+                    Choose your pen name — your workspace opens immediately.
                   </span>
                 </li>
                 <li className="flex gap-4">
                   <span className="font-display text-sm tracking-[0.18em] text-gold-deep">03</span>
                   <span>
-                    An editor reads the application and records a decision. You
-                    can see the outcome and any note on your dashboard.
+                    Add the book: cover, description, PDF or EPUB, and your price.
                   </span>
                 </li>
                 <li className="flex gap-4">
                   <span className="font-display text-sm tracking-[0.18em] text-gold-deep">04</span>
-                  <span>
-                    Once approved, upload the manuscript, cover and prices from the
-                    author dashboard. Every book still passes through approval
-                    before it appears in the catalogue.
-                  </span>
+                  <span>Submit it. An administrator approves it and it goes live.</span>
                 </li>
               </ol>
 
@@ -249,10 +273,10 @@ export default function PublishPage() {
                   Create an account
                 </Link>
                 <Link
-                  href="/author/apply"
+                  href="/author/start"
                   className="inline-flex border border-navy/25 px-6 py-3.5 text-[0.7rem] font-semibold tracking-[0.18em] text-navy uppercase transition-colors hover:border-navy"
                 >
-                  Go to the application
+                  Become an author
                 </Link>
               </div>
             </div>
@@ -262,7 +286,7 @@ export default function PublishPage() {
 
       <section className="border-t border-line bg-white">
         <div className="container-editorial py-16 sm:py-20">
-          <SectionHeading eyebrow="Questions" title="Before you send" />
+          <SectionHeading eyebrow="Questions" title="Before you start" />
           <div className="mt-10 grid gap-6 sm:grid-cols-2">
             {faqs.map((faq) => (
               <div key={faq.q} className="border-t border-line pt-5">

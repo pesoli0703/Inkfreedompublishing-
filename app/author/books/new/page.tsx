@@ -16,13 +16,14 @@ export default async function NewBookPage() {
     .eq("user_id", viewer.id)
     .maybeSingle();
 
-  if (!author || author.status !== "approved") redirect("/author/apply");
+  if (!author) redirect("/author/start");
+  if (author.status === "suspended") redirect("/author/start");
 
   const { data: categories } = await supabase
     .from("categories")
     .select("id, name")
     .eq("is_active", true)
-    .order("display_order");
+    .order("sort_order");
 
   return (
     <DashboardShell

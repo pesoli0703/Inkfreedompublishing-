@@ -16,7 +16,7 @@ export default async function AuthorSettingsPage() {
     .eq("user_id", viewer.id)
     .maybeSingle();
 
-  if (!author) redirect("/author/apply");
+  if (!author) redirect("/author/start");
 
   const avatarUrl = author.avatar_path
     ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/author-avatars/${author.avatar_path}`
