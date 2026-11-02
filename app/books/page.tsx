@@ -4,12 +4,15 @@ import { BookGrid } from "@/components/book-card";
 import { SearchBar } from "@/components/search-bar";
 import { SortSelect } from "@/components/sort-select";
 import {
-  browseBooks,
   getCategory,
+  searchBooks,
+  sortBooks,
   sortOptions,
   type SortKey,
 } from "@/lib/catalogue";
 import { categories } from "@/lib/data/categories";
+import { books as previewBooks } from "@/lib/data/books";
+import { loadLiveCatalogue } from "@/lib/catalogue-live";
 
 export const metadata: Metadata = {
   title: "Discover Books",
@@ -40,7 +43,15 @@ export default async function BooksPage({
     : "curated";
 
   const activeCategory = getCategory(category);
-  const results = browseBooks({ q, category, sort });
+  const live = await loadLiveCatalogue();
+  const isPreview = live.length === 0;
+  const pool = isPreview ? previewBooks : live;
+
+  let results = searchBooks(q, pool);
+  if (activeCategory) {
+    results = results.filter((book) => book.category === activeCategory.slug);
+  }
+  results = sortBooks(results, sort);
 
   const chipHref = (nextCategory?: string) => {
     const query = new URLSearchParams();
@@ -82,7 +93,12 @@ export default async function BooksPage({
               <p className="mt-4 max-w-xl text-[0.95rem] leading-relaxed text-charcoal-soft">
                 {activeCategory
                   ? activeCategory.blurb
-                  : "Independent titles across fiction, poetry, essays, memoir, business and children’s books. Prices shown are sample values for this preview build."}
+                  : "Independent titles across fiction, poetry, essays, memoir, business and children’s books."}
+              </p>
+              <p className="mt-4 inline-flex border border-line bg-white px-3 py-1.5 text-[0.66rem] font-medium tracking-[0.12em] text-charcoal-soft uppercase">
+                {isPreview
+                  ? "Preview catalogue — no titles published yet"
+                  : `Live catalogue — ${live.length} published ${live.length === 1 ? "title" : "titles"}`}
               </p>
             </div>
             <div className="lg:col-span-5">
@@ -140,7 +156,8 @@ export default async function BooksPage({
           <div className="mt-10 border border-line bg-white px-6 py-16 text-center">
             <p className="font-display text-2xl text-navy">No titles found</p>
             <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-charcoal-soft">
-              Nothing in the sample catalogue matches
+              Nothing in {isPreview ? "the preview catalogue" : "the catalogue"}{" "}
+              matches
               {q ? ` “${q}”` : " those filters"}. Try a different title, author
               or theme — or browse the full list.
             </p>

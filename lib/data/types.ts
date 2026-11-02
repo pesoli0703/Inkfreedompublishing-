@@ -27,10 +27,14 @@ export type CoverDesign = {
 };
 
 export type Format = {
-  id: "paperback" | "hardcover" | "ebook";
+  /** Format name for preview data, or the book_formats uuid for live titles. */
+  id: string;
   label: string;
+  /** Entry price in NGN, used when a book comes from the preview dataset. */
   price: number;
   available: boolean;
+  /** Present for titles read from Supabase, alongside the priced offers. */
+  bookFormatId?: string;
 };
 
 export type Author = {

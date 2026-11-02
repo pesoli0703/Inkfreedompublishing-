@@ -11,15 +11,13 @@ import {
   getBook,
   relatedBooks,
 } from "@/lib/catalogue";
-import { books } from "@/lib/data/books";
 import { getAuthor } from "@/lib/data/authors";
 import { formatPrice } from "@/lib/format";
+import { loadLiveBook, loadLiveCatalogue } from "@/lib/catalogue-live";
 
 type Params = { slug: string };
 
-export function generateStaticParams() {
-  return books.map((book) => ({ slug: book.slug }));
-}
+export const revalidate = 300;
 
 export async function generateMetadata({
   params,
@@ -27,7 +25,7 @@ export async function generateMetadata({
   params: Promise<Params>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const book = getBook(slug);
+  const book = (await loadLiveBook(slug)) ?? getBook(slug);
   if (!book) return { title: "Book not found" };
 
   return {
@@ -42,11 +40,23 @@ export async function generateMetadata({
 
 export default async function BookPage({ params }: { params: Promise<Params> }) {
   const { slug } = await params;
-  const book = getBook(slug);
+
+  // Published titles are read from Supabase first; the static preview dataset
+  // only answers when the live catalogue has no such slug.
+  const live = await loadLiveBook(slug);
+  const book = live ?? getBook(slug);
   if (!book) notFound();
 
   const author = getAuthor(book.authorSlug);
-  const related = relatedBooks(book);
+  const related = live
+    ? (await loadLiveCatalogue())
+        .filter((entry) => entry.slug !== live.slug)
+        .sort(
+          (a, b) =>
+            Number(b.category === live.category) - Number(a.category === live.category),
+        )
+        .slice(0, 3)
+    : relatedBooks(book);
 
   return (
     <>
