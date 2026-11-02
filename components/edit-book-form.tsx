@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { updateBookAction, type ActionState } from "@/app/author/actions";
+import { CATEGORY_SECTIONS } from "@/lib/category-sections";
 import { SubmitButton } from "@/components/form-feedback";
 
 const field =
@@ -37,11 +38,20 @@ export function EditBookForm({
   categories,
 }: {
   book: EditableBook;
-  categories: { id: string; name: string }[];
+  categories: { id: string; name: string; section: string }[];
 }) {
   const [state, formAction] = useActionState<ActionState, FormData>(
     updateBookAction,
     null,
+  );
+
+  const sections = CATEGORY_SECTIONS.map((section) => ({
+    section,
+    shelves: categories.filter((category) => category.section === section.slug),
+  })).filter((entry) => entry.shelves.length > 0);
+
+  const unfiled = categories.filter(
+    (category) => !CATEGORY_SECTIONS.some((section) => section.slug === category.section),
   );
 
   return (
@@ -60,10 +70,19 @@ export function EditBookForm({
         <label className={label}>
           Category
           <select name="category_id" defaultValue={book.categoryId ?? ""} className={field}>
-            <option value="">Choose a category</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
+            <option value="">Choose a shelf</option>
+            {sections.map(({ section, shelves }) => (
+              <optgroup key={section.slug} label={section.name}>
+                {shelves.map((shelf) => (
+                  <option key={shelf.id} value={shelf.id}>
+                    {shelf.name}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+            {unfiled.map((shelf) => (
+              <option key={shelf.id} value={shelf.id}>
+                {shelf.name}
               </option>
             ))}
           </select>

@@ -21,7 +21,7 @@ export default async function NewBookPage() {
 
   const { data: categories } = await supabase
     .from("categories")
-    .select("id, name")
+    .select("id, name, section")
     .eq("is_active", true)
     .order("sort_order");
 

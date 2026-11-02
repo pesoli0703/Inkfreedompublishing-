@@ -5,6 +5,7 @@ import { AuthorCard } from "@/components/author-card";
 import { SearchBar } from "@/components/search-bar";
 import { SectionHeading } from "@/components/section-heading";
 import { NewsletterForm } from "@/components/newsletter-form";
+import { groupCategoriesBySection } from "@/lib/category-sections";
 import { loadCategories, loadLiveAuthors, loadLiveCatalogue } from "@/lib/catalogue-live";
 import { formatPrice } from "@/lib/format";
 
@@ -64,6 +65,7 @@ export default async function HomePage() {
   const lead = featuredBooks[0];
   const shelf = featuredBooks.slice(0, 3);
   const catalogueCount = catalogue.length;
+  const categoryGroups = groupCategoriesBySection(categories);
 
   return (
     <>
@@ -93,8 +95,8 @@ export default async function HomePage() {
             <p className="mt-7 max-w-lg text-[1.02rem] leading-relaxed text-charcoal-soft">
               INKFREEDOMPUBLISHING is a premium home for independent authors —
               a publishing house and a marketplace in one. We edit, design and
-              sell a small list of literary fiction, poetry, essays, memoir and
-              children&rsquo;s books.
+              sell books across every shelf, from literary fiction and memoir to
+              business, children&rsquo;s books and academic texts.
             </p>
 
             <div className="mt-9 max-w-xl">
@@ -252,45 +254,65 @@ export default async function HomePage() {
           <SectionHeading
             eyebrow="Browse by category"
             title="Find the shelf you came for"
-            description="Every shelf on the list, from literary fiction to illustrated books for younger readers."
+            description={`${categories.length} shelves in ${categoryGroups.length} sections — fiction, non-fiction, business, poetry and drama, children and young adult, textbooks and academic.`}
             action={{ href: "/categories", label: "All categories" }}
           />
 
           <div className="mt-12 grid gap-px border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
-            {categories.map((category) => (
-              <Link
-                key={category.slug}
-                href={`/books?category=${category.slug}`}
-                className="group relative flex flex-col justify-between gap-8 bg-ivory p-7 transition-colors duration-300 hover:bg-white"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <h3 className="font-display text-2xl leading-tight text-navy">
-                    {category.name}
-                  </h3>
-                  <span className="mt-1 shrink-0 text-[0.65rem] tracking-[0.14em] text-charcoal-soft uppercase">
-                    {category.count === 0
-                      ? "Opening soon"
-                      : `${category.count} ${category.count === 1 ? "title" : "titles"}`}
-                  </span>
-                </div>
-                <p className="text-[0.88rem] leading-relaxed text-charcoal-soft">
-                  {category.blurb}
-                </p>
-                <span className="inline-flex items-center gap-2 text-[0.68rem] font-semibold tracking-[0.18em] text-navy uppercase">
-                  Browse
+            {categoryGroups.map((group) => {
+              const preview = group.categories.slice(0, 3).map((shelf) => shelf.name);
+              const remainder = group.categories.length - preview.length;
+
+              return (
+                <Link
+                  key={group.section.slug}
+                  href={`/categories#${group.section.slug}`}
+                  className="group relative flex flex-col justify-between gap-7 bg-ivory p-7 transition-colors duration-300 hover:bg-white"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <h3 className="font-display text-2xl leading-tight text-navy">
+                      {group.section.name}
+                    </h3>
+                    <span className="mt-1 shrink-0 text-[0.65rem] tracking-[0.14em] text-charcoal-soft uppercase">
+                      {group.categories.length}{" "}
+                      {group.categories.length === 1 ? "shelf" : "shelves"}
+                    </span>
+                  </div>
+
+                  <div>
+                    <p className="text-[0.88rem] leading-relaxed text-charcoal-soft">
+                      {group.section.blurb}
+                    </p>
+                    <p className="mt-4 text-[0.72rem] leading-relaxed tracking-[0.04em] text-charcoal-soft">
+                      {preview.join(" · ")}
+                      {remainder > 0 ? ` · +${remainder} more` : ""}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="inline-flex items-center gap-2 text-[0.68rem] font-semibold tracking-[0.18em] text-navy uppercase">
+                      Open section
+                      <span
+                        aria-hidden="true"
+                        className="transition-transform duration-300 group-hover:translate-x-1.5"
+                      >
+                        →
+                      </span>
+                    </span>
+                    <span className="text-[0.65rem] tracking-[0.12em] text-charcoal-soft uppercase">
+                      {group.count === 0
+                        ? "Opening soon"
+                        : `${group.count} ${group.count === 1 ? "title" : "titles"}`}
+                    </span>
+                  </div>
+
                   <span
                     aria-hidden="true"
-                    className="transition-transform duration-300 group-hover:translate-x-1.5"
-                  >
-                    →
-                  </span>
-                </span>
-                <span
-                  aria-hidden="true"
-                  className="absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 bg-gold transition-transform duration-500 group-hover:scale-x-100"
-                />
-              </Link>
-            ))}
+                    className="absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 bg-gold transition-transform duration-500 group-hover:scale-x-100"
+                  />
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -384,9 +406,10 @@ export default async function HomePage() {
                 </span>
               </h2>
               <p className="mt-5 max-w-xl text-[0.95rem] leading-relaxed text-charcoal-soft">
-                We are opening the list to independent authors across fiction,
-                poetry, essays, memoir and children&rsquo;s books. Submissions
-                are read by an editor, not a form.
+                We are open to independent authors on every shelf — fiction,
+                non-fiction, poetry and drama, business, children&rsquo;s books
+                and academic texts. Upload on your own account; an editor reads
+                every book before it goes on sale.
               </p>
 
               <ul className="mt-8 grid gap-3 text-[0.9rem] text-charcoal sm:grid-cols-2">

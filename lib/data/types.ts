@@ -7,13 +7,12 @@
  * pages say so.
  */
 
-export type CategorySlug =
-  | "literary-fiction"
-  | "poetry"
-  | "essays-criticism"
-  | "memoir"
-  | "business-leadership"
-  | "children-young-readers";
+/**
+ * Shelf slugs live in the `categories` table, not in code: an administrator can
+ * add a shelf without a deploy, so this stays a plain string. Section slugs are
+ * the closed set in `lib/category-sections.ts`.
+ */
+export type CategorySlug = string;
 
 export type Category = {
   slug: CategorySlug;
@@ -21,6 +20,8 @@ export type Category = {
   blurb: string;
   /** Short line used on category tiles */
   note: string;
+  /** Top-level section slug, e.g. "fiction" (see CATEGORY_SECTIONS) */
+  section: string;
   /** Number of published titles on this shelf */
   count: number;
 };
