@@ -38,7 +38,7 @@ describe("self-service publishing", () => {
   });
 
   it("the public page promises no fee and no publishing contract", () => {
-    const publish = read("app/publish/page.tsx");
+    const publish = read("app/(store)/publish/page.tsx");
     expect(publish).toContain("No application fee");
     expect(publish).toContain("No publishing contract");
     expect(existsSync(join(ROOT, "app/author/start/page.tsx"))).toBe(true);

@@ -9,6 +9,7 @@ const navItems = [
   { href: "/books", label: "Discover Books" },
   { href: "/categories", label: "Categories" },
   { href: "/authors", label: "Authors" },
+  { href: "/publish", label: "Publish" },
   { href: "/about", label: "About" },
 ];
 

@@ -16,7 +16,7 @@ const routes = [
   {
     title: "Publishing and submissions",
     body: "Your author workspace opens as soon as you create an account — there is no application to be approved. Every uploaded book is still read by an editor before it goes on sale.",
-    href: "/author/start",
+    href: "/author",
     cta: "Become an author",
   },
   {

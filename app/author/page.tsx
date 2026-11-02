@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { DashboardShell, Empty, NotConfigured, Panel, StatGrid } from "@/components/dashboard-shell";
 import { authorNav } from "@/lib/nav";
-import { requireViewer } from "@/lib/auth";
+import { requireAuthorArea } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/format";
 
@@ -16,7 +16,7 @@ type Stats = {
 };
 
 export default async function AuthorDashboard() {
-  const viewer = await requireViewer("/author");
+  const viewer = await requireAuthorArea("/author");
   const supabase = await createServerSupabaseClient();
 
   if (!supabase) {

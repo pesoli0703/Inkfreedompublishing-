@@ -13,7 +13,17 @@ const field =
 const label =
   "text-[0.66rem] font-semibold tracking-[0.14em] text-charcoal-soft uppercase";
 
-export function AuthForm({ initialMode = "signin" }: { initialMode?: Mode }) {
+export function AuthForm({
+  initialMode = "signin",
+  defaultNext,
+  allowCreate = true,
+}: {
+  initialMode?: Mode;
+  /** Where to land when no ?next= is present. Defaults to the reader dashboard. */
+  defaultNext?: string;
+  /** Admin sign-in must not offer self-service account creation. */
+  allowCreate?: boolean;
+}) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -24,7 +34,10 @@ export function AuthForm({ initialMode = "signin" }: { initialMode?: Mode }) {
   const baseId = useId();
   const router = useRouter();
   const params = useSearchParams();
-  const nextPath = useMemo(() => params.get("next") ?? "/dashboard", [params]);
+  const nextPath = useMemo(
+    () => params.get("next") ?? defaultNext ?? "/dashboard",
+    [params, defaultNext],
+  );
 
   if (!isSupabaseConfigured) {
     return (
@@ -117,7 +130,7 @@ export function AuthForm({ initialMode = "signin" }: { initialMode?: Mode }) {
         {(
           [
             { id: "signin", label: "Sign in" },
-            { id: "create", label: "Create account" },
+            ...(allowCreate ? ([{ id: "create", label: "Create account" }] as const) : []),
           ] as const
         ).map((tab) => (
           <button

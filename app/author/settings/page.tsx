@@ -1,12 +1,12 @@
 import { DashboardShell, Panel } from "@/components/dashboard-shell";
 import { AuthorProfileForm } from "@/components/author-profile-form";
 import { authorNav } from "@/lib/nav";
-import { requireViewer } from "@/lib/auth";
+import { requireAuthorArea } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
 export default async function AuthorSettingsPage() {
-  const viewer = await requireViewer("/author/settings");
+  const viewer = await requireAuthorArea("/author/settings");
   const supabase = await createServerSupabaseClient();
   if (!supabase) redirect("/author");
 

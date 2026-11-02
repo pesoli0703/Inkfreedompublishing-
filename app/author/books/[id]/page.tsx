@@ -5,12 +5,12 @@ import { BookFileForm } from "@/components/book-file-form";
 import { EditBookForm, type EditableBook } from "@/components/edit-book-form";
 import { SubmitBookButton } from "@/components/submit-book-button";
 import { authorNav } from "@/lib/nav";
-import { requireViewer } from "@/lib/auth";
+import { requireAuthorArea } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { formatDate, formatLabel, formatMoney } from "@/lib/format";
 
 export default async function AuthorBookPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireViewer("/author/books");
+  await requireAuthorArea("/author/books");
   const { id } = await params;
   const supabase = await createServerSupabaseClient();
   if (!supabase) notFound();

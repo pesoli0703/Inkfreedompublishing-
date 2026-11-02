@@ -432,7 +432,7 @@ export default async function HomePage() {
 
               <div className="mt-9 flex flex-wrap gap-3">
                 <Link
-                  href="/author/start"
+                  href="/author"
                   className="inline-flex items-center bg-navy px-7 py-4 text-[0.72rem] font-semibold tracking-[0.18em] text-ivory uppercase transition-colors hover:bg-navy-soft"
                 >
                   Start publishing

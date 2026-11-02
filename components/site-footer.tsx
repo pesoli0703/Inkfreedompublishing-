@@ -11,9 +11,9 @@ const explore = [
 
 const authority = [
   { href: "/publish", label: "How Publishing Works" },
-  { href: "/publish#submit", label: "Submit a Manuscript" },
-  { href: "/publish#terms", label: "Author Terms (draft)" },
-  { href: "/signin", label: "Author Sign In" },
+  { href: "/author", label: "Author Portal" },
+  { href: "/author/register", label: "Open an Author Account" },
+  { href: "/author/signin", label: "Author Sign In" },
 ];
 
 const legal = [

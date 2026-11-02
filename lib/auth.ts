@@ -41,8 +41,30 @@ export async function requireViewer(nextPath: string): Promise<Viewer> {
   return viewer;
 }
 
+/**
+ * Author portal guard.
+ *
+ * Signed out? Send them to the author portal's own sign-in screen, not the
+ * storefront's, so the URL they are returned to is the one they wanted.
+ */
+export async function requireAuthorArea(nextPath = "/author"): Promise<Viewer> {
+  const viewer = await getViewer();
+  if (!viewer) redirect(`/author/signin?next=${encodeURIComponent(nextPath)}`);
+  if (viewer.status !== "active") redirect("/suspended");
+  return viewer;
+}
+
+/**
+ * Admin guard.
+ *
+ * Every page under /admin calls this on the server. The role check is a second
+ * line of defence behind the database's row level security: hiding a button is
+ * never the control.
+ */
 export async function requireAdmin(nextPath = "/admin"): Promise<Viewer> {
-  const viewer = await requireViewer(nextPath);
+  const viewer = await getViewer();
+  if (!viewer) redirect(`/admin/signin?next=${encodeURIComponent(nextPath)}`);
+  if (viewer.status !== "active") redirect("/suspended");
   if (viewer.role !== "admin") redirect("/dashboard");
   return viewer;
 }

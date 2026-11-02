@@ -42,11 +42,11 @@ describe("public catalogue has no bundled sample data", () => {
 
   it("catalogue pages load from Supabase", () => {
     const pages = [
-      "app/books/page.tsx",
-      "app/books/[slug]/page.tsx",
-      "app/authors/page.tsx",
-      "app/authors/[slug]/page.tsx",
-      "app/categories/page.tsx",
+      "app/(store)/books/page.tsx",
+      "app/(store)/books/[slug]/page.tsx",
+      "app/(store)/authors/page.tsx",
+      "app/(store)/authors/[slug]/page.tsx",
+      "app/(store)/categories/page.tsx",
       "app/sitemap.ts",
     ];
 
