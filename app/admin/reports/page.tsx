@@ -8,7 +8,7 @@ export default async function AdminReportsPage() {
   await requireAdmin("/admin/reports");
   const supabase = await createServerSupabaseClient();
 
-  const [{ data: entries }, { data: payments }, { data: orders }] = supabase
+  const [{ data: entries }, { data: payments }, { data: orders }, { data: report }] = supabase
     ? await Promise.all([
         supabase
           .from("ledger_entries")
@@ -25,8 +25,22 @@ export default async function AdminReportsPage() {
           .select("id, order_number, currency, total_minor, commission_base_minor, fx_rate_to_base, status, placed_at")
           .order("created_at", { ascending: false })
           .limit(200),
+        supabase.rpc("admin_payments_report"),
       ])
-    : [{ data: null }, { data: null }, { data: null }];
+    : [{ data: null }, { data: null }, { data: null }, { data: null }];
+
+  const currencyRows = (report ?? []) as {
+    currency: string;
+    verified_payments: number;
+    gross_minor: number;
+    gateway_fee_minor: number;
+    settlement_minor: number;
+    platform_commission_minor: number;
+    author_earnings_minor: number;
+    pending_payments: number;
+    failed_payments: number;
+    refunded_minor: number;
+  }[];
 
   const totals = new Map<string, number>();
   for (const entry of entries ?? []) {
@@ -65,6 +79,50 @@ export default async function AdminReportsPage() {
             { label: "Ledger entries (recent)", value: String(entries?.length ?? 0) },
           ]}
         />
+
+        <Panel title="Verified payments by currency">
+          <p className="mb-4 text-[0.78rem] leading-relaxed text-charcoal-soft">
+            Each currency is reported on its own line and is never converted or
+            added to another. Gateway fees are recorded separately and are not
+            deducted from author earnings.
+          </p>
+          {currencyRows.length === 0 ? (
+            <Empty title="No payments recorded yet" />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[46rem] text-left text-[0.82rem]">
+                <thead className="border-b border-line text-[0.65rem] tracking-[0.12em] text-charcoal-soft uppercase">
+                  <tr>
+                    <th className="py-2 pr-4">Currency</th>
+                    <th className="py-2 pr-4">Verified</th>
+                    <th className="py-2 pr-4">Gross</th>
+                    <th className="py-2 pr-4">Gateway fees</th>
+                    <th className="py-2 pr-4">Commission</th>
+                    <th className="py-2 pr-4">Author earnings</th>
+                    <th className="py-2 pr-4">Pending</th>
+                    <th className="py-2 pr-4">Failed</th>
+                    <th className="py-2">Refunded</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line">
+                  {currencyRows.map((row) => (
+                    <tr key={row.currency}>
+                      <td className="py-2.5 pr-4 font-medium text-navy">{row.currency}</td>
+                      <td className="py-2.5 pr-4">{row.verified_payments}</td>
+                      <td className="py-2.5 pr-4">{formatMoney(row.gross_minor, row.currency)}</td>
+                      <td className="py-2.5 pr-4">{row.gateway_fee_minor ? formatMoney(row.gateway_fee_minor, row.currency) : "not recorded"}</td>
+                      <td className="py-2.5 pr-4">{formatMoney(row.platform_commission_minor, row.currency)}</td>
+                      <td className="py-2.5 pr-4">{formatMoney(row.author_earnings_minor, row.currency)}</td>
+                      <td className="py-2.5 pr-4">{row.pending_payments}</td>
+                      <td className="py-2.5 pr-4">{row.failed_payments}</td>
+                      <td className="py-2.5">{formatMoney(row.refunded_minor, row.currency)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Panel>
 
         <Panel title="Per-currency order totals">
           {byCurrency.size === 0 ? (

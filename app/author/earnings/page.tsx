@@ -16,7 +16,7 @@ export default async function EarningsPage() {
     );
   }
 
-  const [{ data: earnings }, { data: withdrawals }, { data: accounts }, { data: settings }] = await Promise.all([
+  const [{ data: earnings }, { data: withdrawals }, { data: accounts }, { data: settings }, { data: salesReport }] = await Promise.all([
     supabase.rpc("author_earnings", { p_currency: "NGN" }),
     supabase
       .from("withdrawals")
@@ -24,7 +24,19 @@ export default async function EarningsPage() {
       .order("requested_at", { ascending: false }),
     supabase.from("payout_accounts").select("id, bank_name, account_last4").is("deleted_at", null).order("created_at", { ascending: false }),
     supabase.from("app_config").select("payout_minimum_minor, reserve_hold_days, platform_fee_bps").maybeSingle(),
+    supabase.rpc("author_sales_report"),
   ]);
+
+  const sales = (salesReport ?? []) as {
+    currency: string;
+    verified_sales: number;
+    gross_minor: number;
+    platform_commission_minor: number;
+    author_share_minor: number;
+    available_minor: number;
+    reserve_minor: number;
+    paid_out_minor: number;
+  }[];
 
   const wallet = (earnings ?? [])[0] as
     | { currency: string; pending_minor: number; available_minor: number; lifetime_minor: number; paid_minor: number }
@@ -50,6 +62,50 @@ export default async function EarningsPage() {
             { label: "Available", value: formatMoney(wallet?.available_minor ?? 0) },
           ]}
         />
+
+        <Panel title="Verified sales by currency">
+          <p className="mb-4 text-[0.78rem] leading-relaxed text-charcoal-soft">
+            Only payments verified with Flutterwave appear here. Each currency is
+            kept separate: NGN, USD, GBP and EUR balances are never combined.
+          </p>
+          {sales.length === 0 ? (
+            <Empty title="No verified sales yet">
+              A sale appears after the gateway confirms the payment and the
+              ledger posts your share.
+            </Empty>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[40rem] text-left text-[0.82rem]">
+                <thead className="border-b border-line text-[0.65rem] tracking-[0.12em] text-charcoal-soft uppercase">
+                  <tr>
+                    <th className="py-2 pr-4">Currency</th>
+                    <th className="py-2 pr-4">Sales</th>
+                    <th className="py-2 pr-4">Gross</th>
+                    <th className="py-2 pr-4">Commission</th>
+                    <th className="py-2 pr-4">Your share</th>
+                    <th className="py-2 pr-4">Available</th>
+                    <th className="py-2 pr-4">In reserve</th>
+                    <th className="py-2">Paid out</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line">
+                  {sales.map((row) => (
+                    <tr key={row.currency}>
+                      <td className="py-2.5 pr-4 font-medium text-navy">{row.currency}</td>
+                      <td className="py-2.5 pr-4">{row.verified_sales}</td>
+                      <td className="py-2.5 pr-4">{formatMoney(row.gross_minor, row.currency)}</td>
+                      <td className="py-2.5 pr-4">{formatMoney(row.platform_commission_minor, row.currency)}</td>
+                      <td className="py-2.5 pr-4">{formatMoney(row.author_share_minor, row.currency)}</td>
+                      <td className="py-2.5 pr-4">{formatMoney(row.available_minor, row.currency)}</td>
+                      <td className="py-2.5 pr-4">{formatMoney(row.reserve_minor, row.currency)}</td>
+                      <td className="py-2.5">{formatMoney(row.paid_out_minor, row.currency)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Panel>
 
         <Panel title="Withdrawals" tone={accountOptions.length === 0 ? "warning" : "default"}>
           {accountOptions.length === 0 ? (

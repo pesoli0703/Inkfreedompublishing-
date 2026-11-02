@@ -1,138 +1,268 @@
-const API = "https://api.flutterwave.com/v3";
+import "server-only";
 
-export const flutterwaveConfigured = () =>
-  Boolean(process.env.FLUTTERWAVE_SECRET_KEY);
+import { createHmac, timingSafeEqual } from "node:crypto";
+import { GATEWAY_CURRENCIES, majorToMinor, type VerifiedPayment } from "./logic";
 
-export const webhookHashConfigured = () =>
-  Boolean(process.env.FLUTTERWAVE_SECRET_HASH);
+/**
+ * Flutterwave v3 REST client (standard/hosted checkout).
+ * Docs: https://developer.flutterwave.com/docs/flutterwave-standard-1
+ *       https://developer.flutterwave.com/docs/transaction-verification
+ *       https://developer.flutterwave.com/docs/webhooks
+ *
+ * The secret key never leaves the server: this module is server-only and is
+ * never imported from a client component.
+ */
 
-type InitiateInput = {
+const DEFAULT_BASE_URL = "https://api.flutterwave.com/v3";
+const REQUEST_TIMEOUT_MS = 20_000;
+
+export class FlutterwaveError extends Error {
+  readonly status: number;
+  readonly code: string;
+  constructor(message: string, status = 502, code = "gateway_error") {
+    super(message);
+    this.name = "FlutterwaveError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
+export function flutterwaveConfig() {
+  return {
+    secretKey: (process.env.FLUTTERWAVE_SECRET_KEY ?? "").trim(),
+    publicKey: (process.env.FLUTTERWAVE_PUBLIC_KEY ?? "").trim(),
+    // FLUTTERWAVE_WEBHOOK_SECRET_HASH is the documented name; the older
+    // FLUTTERWAVE_SECRET_HASH is still read so existing deployments keep working.
+    webhookHash: (
+      process.env.FLUTTERWAVE_WEBHOOK_SECRET_HASH ??
+      process.env.FLUTTERWAVE_SECRET_HASH ??
+      ""
+    ).trim(),
+    baseUrl: (process.env.FLUTTERWAVE_API_BASE ?? DEFAULT_BASE_URL).replace(/\/+$/, ""),
+  };
+}
+
+export const flutterwaveConfigured = () => Boolean(flutterwaveConfig().secretKey);
+export const webhookSignatureConfigured = () => Boolean(flutterwaveConfig().webhookHash);
+
+async function call(path: string, init: RequestInit) {
+  const { secretKey, baseUrl } = flutterwaveConfig();
+  if (!secretKey) throw new FlutterwaveError("Flutterwave is not configured on this deployment.", 503, "not_configured");
+
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}${path}`, {
+      ...init,
+      headers: {
+        Authorization: `Bearer ${secretKey}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...(init.headers ?? {}),
+      },
+      cache: "no-store",
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+  } catch (caught) {
+    throw new FlutterwaveError(
+      caught instanceof Error && caught.name === "TimeoutError"
+        ? "Flutterwave did not respond in time."
+        : "Could not reach Flutterwave.",
+      504,
+      "unreachable",
+    );
+  }
+
+  const payload = (await response.json().catch(() => null)) as Record<string, unknown> | null;
+  return { response, payload };
+}
+
+export type CheckoutInput = {
   txRef: string;
   amountMinor: bigint;
   currency: string;
   customerEmail: string;
   customerName?: string | null;
+  customerPhone?: string | null;
   redirectUrl: string;
   title: string;
+  description?: string;
+  meta?: Record<string, string | number | null>;
 };
 
 /**
- * Creates a hosted checkout. `amountMinor` is converted to major units in the
- * ISO minor-unit sense; NGN, USD, GBP and EUR all use two decimals, so the
- * division is exact for the launch currencies.
+ * Creates a fresh hosted-checkout session for one order. The amount is derived
+ * from the stored order, never from the browser.
  */
-export async function createCheckout(input: InitiateInput) {
-  const secret = process.env.FLUTTERWAVE_SECRET_KEY;
-  if (!secret) throw new Error("Flutterwave is not configured.");
+export async function initiateCheckout(input: CheckoutInput): Promise<{ link: string }> {
+  const currency = input.currency.toUpperCase();
+  if (!GATEWAY_CURRENCIES.includes(currency as (typeof GATEWAY_CURRENCIES)[number])) {
+    throw new FlutterwaveError(`Unsupported payment currency: ${currency}.`, 400, "unsupported_currency");
+  }
+  if (input.amountMinor <= 0n) {
+    throw new FlutterwaveError("Refusing to start a payment for a zero amount.", 400, "invalid_amount");
+  }
+  if (!input.customerEmail) {
+    throw new FlutterwaveError("A customer email is required by Flutterwave.", 400, "missing_email");
+  }
 
-  const response = await fetch(`${API}/payments`, {
+  const amount = `${input.amountMinor / 100n}.${(input.amountMinor % 100n).toString().padStart(2, "0")}`;
+
+  const { response, payload } = await call("/payments", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${secret}`,
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify({
       tx_ref: input.txRef,
-      amount: Number(input.amountMinor) / 100,
-      currency: input.currency,
+      amount,
+      currency,
       redirect_url: input.redirectUrl,
       customer: {
         email: input.customerEmail,
         name: input.customerName ?? input.customerEmail,
+        ...(input.customerPhone ? { phonenumber: input.customerPhone } : {}),
       },
       customizations: {
         title: input.title,
-        description: `Order ${input.txRef}`,
+        description: input.description ?? `Order ${input.txRef}`,
       },
+      meta: { tx_ref: input.txRef, ...(input.meta ?? {}) },
     }),
-    cache: "no-store",
   });
 
-  const payload = (await response.json().catch(() => null)) as
-    | { status?: string; message?: string; data?: { link?: string } }
-    | null;
-
-  if (!response.ok || payload?.status !== "success" || !payload.data?.link) {
-    throw new Error(
-      payload?.message ?? "Flutterwave did not return a checkout link.",
+  const data = (payload?.data ?? null) as { link?: string } | null;
+  if (!response.ok || payload?.status !== "success" || !data?.link) {
+    throw new FlutterwaveError(
+      String(payload?.message ?? "Flutterwave did not return a checkout link."),
+      502,
+      "checkout_failed",
     );
   }
-
-  return { link: payload.data.link };
+  return { link: data.link };
 }
 
-export type VerifiedTransaction = {
-  status: "successful" | "failed" | "unknown";
-  amountMinor: bigint;
-  currency: string;
-  providerTransactionId: string | null;
-  providerStatus: string;
-  channel: string | null;
-  customerEmail: string | null;
+export type VerificationResult = {
+  found: boolean;
+  transaction: VerifiedPayment;
   raw: unknown;
+  httpStatus: number;
 };
 
-/** Server-side lookup. This is the only source of truth for a payment. */
-export async function verifyTransactionByReference(
-  txRef: string,
-): Promise<VerifiedTransaction> {
-  const secret = process.env.FLUTTERWAVE_SECRET_KEY;
-  if (!secret) throw new Error("Flutterwave is not configured.");
+type RawTransaction = {
+  id?: number | string;
+  tx_ref?: string;
+  status?: string;
+  amount?: number | string;
+  currency?: string;
+  charged_amount?: number | string;
+  app_fee?: number | string;
+  fee?: number | string;
+  payment_type?: string;
+  customer?: { email?: string };
+};
 
-  const response = await fetch(
-    `${API}/transactions/verify_by_reference?tx_ref=${encodeURIComponent(txRef)}`,
-    {
-      headers: { Authorization: `Bearer ${secret}` },
-      cache: "no-store",
-    },
-  );
-
-  const payload = (await response.json().catch(() => null)) as
-    | {
-        status?: string;
-        data?: {
-          status?: string;
-          amount?: number | string;
-          currency?: string;
-          id?: number | string;
-          tx_ref?: string;
-          payment_type?: string;
-          customer?: { email?: string };
-        };
-      }
-    | null;
-
-  const data = payload?.data;
-  if (!response.ok || !data) {
+function normalise(data: RawTransaction | null): VerifiedPayment {
+  if (!data) {
     return {
       status: "unknown",
-      amountMinor: 0n,
+      amountMinor: null,
       currency: "",
       providerTransactionId: null,
-      providerStatus: "unverifiable",
+      providerStatus: "not_found",
+      feeMinor: null,
       channel: null,
       customerEmail: null,
-      raw: payload,
+      txRef: null,
     };
   }
-
   const providerStatus = String(data.status ?? "").toLowerCase();
-  const amountMajor = Number(data.amount ?? 0);
-  const amountMinor = BigInt(Math.round(amountMajor * 100));
-
-  return {
-    status:
-      providerStatus === "successful"
-        ? "successful"
+  const amount = majorToMinor(data.amount);
+  const fee = majorToMinor(data.app_fee ?? data.fee ?? null);
+  const status: VerifiedPayment["status"] =
+    providerStatus === "successful" || providerStatus === "success" || providerStatus === "completed"
+      ? "successful"
+      : providerStatus === "pending" || providerStatus === "new" || providerStatus === "processing"
+        ? "pending"
         : providerStatus === ""
           ? "unknown"
-          : "failed",
-    amountMinor,
+          : "failed";
+
+  return {
+    status,
+    amountMinor: amount.ok ? amount.minor : null,
     currency: String(data.currency ?? "").toUpperCase(),
     providerTransactionId: data.id != null ? String(data.id) : null,
     providerStatus,
+    feeMinor: fee.ok ? fee.minor : null,
     channel: data.payment_type ?? null,
     customerEmail: data.customer?.email ?? null,
-    raw: payload,
+    txRef: data.tx_ref ?? null,
+  };
+}
+
+/**
+ * Server-side lookup. Verification by transaction id is the documented flow;
+ * reference lookup is used when the browser only knows its own tx_ref.
+ */
+export async function verifyTransaction(input: {
+  transactionId?: string | number | null;
+  txRef?: string | null;
+}): Promise<VerificationResult> {
+  const path =
+    input.transactionId != null && String(input.transactionId).length > 0
+      ? `/transactions/${encodeURIComponent(String(input.transactionId))}/verify`
+      : input.txRef
+        ? `/transactions/verify_by_reference?tx_ref=${encodeURIComponent(input.txRef)}`
+        : null;
+
+  if (!path) throw new FlutterwaveError("Nothing to verify.", 400, "invalid_request");
+
+  const { response, payload } = await call(path, { method: "GET" });
+  const data = (payload?.data ?? null) as RawTransaction | null;
+  const found = Boolean(response.ok && payload?.status === "success" && data);
+
+  return { found, transaction: normalise(found ? data : null), raw: payload, httpStatus: response.status };
+}
+
+export type SignatureCheck = {
+  valid: boolean;
+  scheme: "verif-hash" | "flutterwave-signature" | null;
+  reason?: string;
+};
+
+const constantTimeEquals = (a: string, b: string) => {
+  const left = Buffer.from(a, "utf8");
+  const right = Buffer.from(b, "utf8");
+  if (left.length !== right.length) return false;
+  return timingSafeEqual(left, right);
+};
+
+/**
+ * Flutterwave's documented webhook check is the `verif-hash` header matching the
+ * secret hash configured in the dashboard. We additionally accept an
+ * HMAC-SHA256 signature of the raw body (sent as `flutterwave-signature` by
+ * newer integrations) so a future migration does not require a code change.
+ */
+export function verifyWebhookSignature(rawBody: string, headers: Headers): SignatureCheck {
+  const { webhookHash } = flutterwaveConfig();
+  if (!webhookHash) return { valid: false, scheme: null, reason: "webhook secret hash is not configured" };
+
+  const verifHash = headers.get("verif-hash");
+  if (verifHash && constantTimeEquals(verifHash, webhookHash)) {
+    return { valid: true, scheme: "verif-hash" };
+  }
+
+  const signature = headers.get("flutterwave-signature");
+  if (signature) {
+    const digest = createHmac("sha256", webhookHash).update(rawBody, "utf8").digest();
+    const hex = digest.toString("hex");
+    const base64 = digest.toString("base64");
+    if (constantTimeEquals(signature, hex) || constantTimeEquals(signature, base64)) {
+      return { valid: true, scheme: "flutterwave-signature" };
+    }
+    return { valid: false, scheme: "flutterwave-signature", reason: "signature did not match" };
+  }
+
+  return {
+    valid: false,
+    scheme: verifHash ? "verif-hash" : null,
+    reason: verifHash ? "verif-hash did not match" : "no signature header present",
   };
 }

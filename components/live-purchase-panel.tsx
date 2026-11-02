@@ -51,6 +51,10 @@ export function LivePurchasePanel({
         }),
       });
       const order = await orderResponse.json();
+      if (orderResponse.status === 401) {
+        router.push(`/signin?next=${encodeURIComponent(window.location.pathname)}`);
+        return;
+      }
       if (!orderResponse.ok) throw new Error(order.error ?? "Could not create the order.");
 
       const payResponse = await fetch("/api/payments/initiate", {
