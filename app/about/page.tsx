@@ -94,7 +94,7 @@ async function readStatus(): Promise<StatusItem[]> {
     },
     accounts,
     {
-      label: "Author applications & uploads",
+      label: "Author sign-ups & uploads",
       value: catalogueLive ? "Live" : "Not configured",
       live: catalogueLive,
     },

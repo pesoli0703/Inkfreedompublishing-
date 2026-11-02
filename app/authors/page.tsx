@@ -32,9 +32,8 @@ export default async function AuthorsPage() {
             The people on the list
           </h1>
           <p className="mt-5 max-w-2xl text-[0.97rem] leading-relaxed text-charcoal-soft">
-            A small, hand-edited list of writers. Profiles are written by the
-            authors themselves and appear once their application has been
-            approved.
+            Writers who publish with us. Profiles are written by the authors
+            themselves and appear once they have opened their author workspace.
           </p>
         </div>
       </section>
@@ -44,14 +43,14 @@ export default async function AuthorsPage() {
           <div className="border border-line bg-white px-6 py-16 text-center">
             <p className="font-display text-2xl text-navy">No authors yet</p>
             <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-charcoal-soft">
-              Approved author profiles appear here. Ours is a small list, and it
-              is open — the first names will arrive with the first titles.
+              Author profiles appear here with their first title. The list is
+              open to anyone — there is no application to wait on.
             </p>
             <Link
-              href="/publish"
+              href="/author/start"
               className="mt-7 inline-flex bg-navy px-6 py-3.5 text-[0.7rem] font-semibold tracking-[0.18em] text-ivory uppercase transition-colors hover:bg-navy-soft"
             >
-              Apply to publish
+              Become an author
             </Link>
           </div>
         ) : (
@@ -68,15 +67,16 @@ export default async function AuthorsPage() {
               Want to join the list?
             </h2>
             <p className="mt-2 max-w-lg text-sm leading-relaxed text-charcoal-soft">
-              We read every submission. Send a proposal, a synopsis and a sample
-              chapter to start the conversation.
+              Create an account, choose a pen name and your workspace opens
+              immediately. Upload your eBook, set your price and submit it — an
+              editor reviews every title before it goes on sale.
             </p>
           </div>
           <Link
-            href="/publish#submit"
+            href="/author/start"
             className="shrink-0 bg-navy px-7 py-4 text-[0.72rem] font-semibold tracking-[0.18em] text-ivory uppercase transition-colors hover:bg-navy-soft"
           >
-            Submit a manuscript
+            Start publishing
           </Link>
         </div>
       </section>
