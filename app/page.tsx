@@ -162,7 +162,8 @@ export default async function HomePage() {
                 </p>
                 <p className="mt-3 max-w-sm text-[0.85rem] leading-relaxed text-charcoal-soft">
                   Our catalogue opens with its first published books. Authors can
-                  apply, upload a manuscript and go through editorial review now.
+                  open a workspace, upload a book and send it for editorial review
+                  now.
                 </p>
                 <Link
                   href="/publish"
@@ -481,8 +482,9 @@ export default async function HomePage() {
                   </div>
                 </dl>
                 <p className="mt-6 border-t border-line pt-4 text-[0.72rem] leading-relaxed text-charcoal-soft">
-                  Any of these, or anything else you have written. Choose your pen
-                  name and upload — no one has to accept you first.
+                  Every shelf is open: {categories.length} of them, from crime
+                  novels to law textbooks. Choose your pen name and upload — no one
+                  has to accept you first.
                 </p>
               </div>
             </div>
