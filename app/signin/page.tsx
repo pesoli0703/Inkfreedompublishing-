@@ -15,7 +15,7 @@ const benefits = [
   "Track orders and download digital editions",
   "Save titles to a reading list",
   "Follow authors on the list",
-  "Access the author dashboard for submissions",
+  "Publish and sell your own eBooks",
 ];
 
 export default async function SignInPage() {
@@ -80,9 +80,10 @@ export default async function SignInPage() {
             <p className="eyebrow text-charcoal-soft">How accounts work</p>
             <p className="mt-2 text-[0.8rem] leading-relaxed text-charcoal-soft">
               Accounts run on Supabase Authentication. Reader accounts are
-              created immediately. Author access requires an approved author
-              application — no one can promote themselves to author or
-              administrator from the browser.
+              created immediately, and you can open an author workspace from your
+              dashboard whenever you like — choose a pen name and start
+              uploading. Administrator access is granted only inside the
+              database; no one can promote themselves from the browser.
             </p>
           </div>
 

@@ -51,7 +51,7 @@ const groups = [
     items: [
       {
         q: "Can I just start uploading books?",
-        a: "No. Author access is granted after an application is reviewed. Applicants provide a full name, pen name, biography, country, photograph and areas of interest.",
+        a: "Yes. Create an account, choose a pen name and your author workspace opens immediately. There is no application fee and no publishing contract — you keep the rights to your work.",
       },
       {
         q: "Who decides whether my book is published?",
