@@ -12,7 +12,7 @@ export default function AuthorAgreementPage() {
       eyebrow="Legal"
       title="Author Agreement"
       updated="2 November 2026"
-      intro="This summary describes the arrangement between an author and the platform. It is presented for review before production begins and should be read with the Terms of Use."
+      intro="This is a non-exclusive licence to sell your books, not a publishing contract. You keep the copyright, you set the price, and you can withdraw a title whenever you like. Read it with the Terms of Use."
     >
       <Clause title="1. What you grant">
         <p>
@@ -25,9 +25,8 @@ export default function AuthorAgreementPage() {
 
       <Clause title="2. Exclusivity">
         <p>
-          Titles are non-exclusive by default. Any exclusivity period must be
-          agreed in writing before production and will be recorded in the title’s
-          metadata.
+          Nothing here is exclusive. You may sell the same book anywhere else, in
+          any edition, at any price. No exclusivity period is offered or required.
         </p>
       </Clause>
 
@@ -40,18 +39,21 @@ export default function AuthorAgreementPage() {
         </ul>
       </Clause>
 
-      <Clause title="4. Editorial review">
+      <Clause title="4. Review before publication">
         <p>
-          Every submission is read by a person. A submission may be approved,
-          returned for changes with a written note, or rejected with a reason.
-          Approval is not a guarantee of sales.
+          You publish on your own account — there is no application to be accepted
+          for and no editorial gate in front of the upload form. Each book is
+          checked by an administrator before it goes on sale: that the files open,
+          that the listing is complete, and that the work is yours to sell. A book
+          may be approved, returned for changes with a written note, or rejected
+          with a reason. Approval is not a guarantee of sales.
         </p>
       </Clause>
 
       <Clause title="5. Royalties">
         <p>
-          The split is 90% to the author and 10% to the platform on the listed
-          price of each sale. The split is recorded on every order line and in the
+          There is no fee to publish. The split is 90% to the author and 10% to
+          the platform on the listed price of each sale. The split is recorded on every order line and in the
           ledger. Payment-gateway fees are recorded separately against the payment
           and are not deducted from your share.
         </p>

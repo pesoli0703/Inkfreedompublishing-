@@ -26,6 +26,42 @@ const slugify = (value: string) =>
     .replace(/^-+|-+$/g, "")
     .slice(0, 70);
 
+/**
+ * Self-service onboarding. A signed-in reader becomes a published-eligible
+ * author immediately — no application, no waiting for an editor. Every book is
+ * still reviewed by an administrator before it reaches the store.
+ */
+export async function startPublishingAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const viewer = await getViewer();
+  if (!viewer) return { ok: false, message: "Please sign in to start publishing." };
+
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) return { ok: false, message: "Accounts are not connected." };
+
+  const penName = text(formData, "pen_name");
+  if (penName.length < 2) {
+    return { ok: false, message: "Choose a pen name of at least two characters." };
+  }
+
+  const { error } = await supabase.rpc("start_self_publishing", {
+    p_pen_name: penName,
+    p_tagline: text(formData, "tagline") || null,
+    p_bio: text(formData, "bio") || null,
+    p_based_in: text(formData, "based_in") || null,
+    p_country: text(formData, "country_code").toUpperCase().slice(0, 2) || null,
+    p_writing_in: text(formData, "writing_in") || null,
+  });
+  if (error) return failure(error);
+
+  revalidatePath("/author");
+  revalidatePath("/author/books");
+  revalidatePath("/authors");
+  redirect("/author/books/new");
+}
+
 export async function applyAsAuthorAction(
   _prev: ActionState,
   formData: FormData,
@@ -157,8 +193,11 @@ export async function createBookAction(
     .eq("user_id", viewer.id)
     .maybeSingle();
 
-  if (!author || author.status !== "approved") {
-    return { ok: false, message: "Only approved authors can create books." };
+  if (!author) {
+    return { ok: false, message: "Start publishing first — choose a pen name." };
+  }
+  if (author.status === "suspended") {
+    return { ok: false, message: "This publishing account is suspended." };
   }
 
   const title = text(formData, "title");

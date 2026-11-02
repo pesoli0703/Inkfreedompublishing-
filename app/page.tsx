@@ -11,34 +11,34 @@ import { formatPrice } from "@/lib/format";
 const publishingSteps = [
   {
     number: "01",
-    title: "Send your manuscript",
-    body: "A short proposal, a synopsis and a sample chapter is enough to begin. We reply to every submission, whether or not we take it forward.",
+    title: "Create an account",
+    body: "Register with your email address and your author workspace opens immediately — no application, no waiting to be accepted.",
   },
   {
     number: "02",
-    title: "Editorial review",
-    body: "We read for fit with the list, then look at structure, line and title. If the book needs work, we say so before anyone signs anything.",
+    title: "Upload your eBook",
+    body: "Add the title, description, cover image and the book itself as a PDF or EPUB. Files stay private until someone buys.",
   },
   {
     number: "03",
-    title: "Design & production",
-    body: "Cover, typesetting and proof rounds are handled in-house so the book looks like it belongs with the rest of the catalogue.",
+    title: "Set your price",
+    body: "Choose your price in naira. We convert it for readers in other currencies and you keep 90% of every sale.",
   },
   {
     number: "04",
-    title: "Publication & sales",
-    body: "We prepare both print and digital editions and list the book on this marketplace, with royalties agreed in writing up front.",
+    title: "Submit for approval",
+    body: "An administrator checks the listing, then your book goes live in the bookstore for readers to buy.",
   },
 ];
 
 const commitments = [
   {
-    title: "Author-owned rights",
-    body: "Licensing terms are agreed per title and set out in writing before production begins.",
+    title: "You keep the rights",
+    body: "A non-exclusive licence, not a publishing contract. Sell the same book anywhere else.",
   },
   {
-    title: "Edited, not just uploaded",
-    body: "Every title on the list passes through editorial and proof rounds.",
+    title: "90% to the author",
+    body: "You keep 90% of every sale. No application fee and no publishing fee.",
   },
   {
     title: "Print and digital",
@@ -318,21 +318,21 @@ export default async function HomePage() {
           <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
             <div className="lg:col-span-4">
               <SectionHeading
-                eyebrow="How publishing works"
+                eyebrow="How self-publishing works"
                 title={
                   <>
-                    From manuscript
-                    <span className="block italic text-gold-soft">to bookshop.</span>
+                    From your file
+                    <span className="block italic text-gold-soft">to a reader.</span>
                   </>
                 }
-                description="A clear four-stage process for independent authors, with terms agreed before production begins."
+                description="Four steps. No application fee, no publishing contract, no waiting for an editor to accept you."
                 tone="dark"
               />
               <Link
                 href="/publish"
                 className="mt-8 inline-flex items-center gap-2 border border-white/20 px-6 py-3.5 text-[0.7rem] font-semibold tracking-[0.18em] text-ivory uppercase transition-colors hover:border-gold hover:text-gold-soft"
               >
-                Read the full process
+                Start publishing
               </Link>
             </div>
 
@@ -353,9 +353,9 @@ export default async function HomePage() {
                 ))}
               </ol>
               <p className="mt-6 text-[0.72rem] text-ivory/55">
-                Author dashboards and manuscript tracking are live. Customer
-                payments are switched off until the purchase and download journey
-                has been signed off.
+                Author workspaces and book review are live. Customer payments are
+                switched off until the purchase and download journey has been
+                signed off.
               </p>
             </div>
           </div>
@@ -408,10 +408,10 @@ export default async function HomePage() {
 
               <div className="mt-9 flex flex-wrap gap-3">
                 <Link
-                  href="/publish#submit"
+                  href="/author/start"
                   className="inline-flex items-center bg-navy px-7 py-4 text-[0.72rem] font-semibold tracking-[0.18em] text-ivory uppercase transition-colors hover:bg-navy-soft"
                 >
-                  Submit a manuscript
+                  Start publishing
                 </Link>
                 <Link
                   href="/about"
@@ -424,20 +424,20 @@ export default async function HomePage() {
 
             <div className="lg:col-span-5">
               <div className="h-full border border-line bg-ivory p-7">
-                <p className="eyebrow text-charcoal-soft">Currently open</p>
+                <p className="eyebrow text-charcoal-soft">Publish any of these</p>
                 <dl className="mt-5 space-y-5 text-sm">
                   <div>
                     <dt className="font-display text-base text-navy">
                       Literary fiction
                     </dt>
                     <dd className="text-charcoal-soft">
-                      Novels and story collections, 60,000–110,000 words.
+                      Novels and story collections, any length.
                     </dd>
                   </div>
                   <div className="border-t border-line pt-5">
                     <dt className="font-display text-base text-navy">Poetry</dt>
                     <dd className="text-charcoal-soft">
-                      Full collections, 48–96 pages.
+                      Full collections and pamphlets.
                     </dd>
                   </div>
                   <div className="border-t border-line pt-5">
@@ -445,7 +445,7 @@ export default async function HomePage() {
                       Essays &amp; memoir
                     </dt>
                     <dd className="text-charcoal-soft">
-                      Proposals with two sample essays or chapters.
+                      Essay collections, criticism and memoir.
                     </dd>
                   </div>
                   <div className="border-t border-line pt-5">
@@ -458,8 +458,8 @@ export default async function HomePage() {
                   </div>
                 </dl>
                 <p className="mt-6 border-t border-line pt-4 text-[0.72rem] leading-relaxed text-charcoal-soft">
-                  Applications are reviewed by an editor. Once approved, you can
-                  upload your manuscript and cover from your author dashboard.
+                  Any of these, or anything else you have written. Choose your pen
+                  name and upload — no one has to accept you first.
                 </p>
               </div>
             </div>

@@ -41,17 +41,17 @@ export default async function AuthorDashboard() {
     return (
       <DashboardShell eyebrow="Author" title="Author dashboard" sections={authorNav()}>
         <Panel tone="warning">
-          <p className="eyebrow text-charcoal-soft">No author profile</p>
+          <p className="eyebrow text-charcoal-soft">Publishing is not set up yet</p>
           <p className="mt-3 text-[0.88rem] leading-relaxed text-charcoal">
-            This account does not have an approved author profile yet, so there is
-            nothing to manage. Apply to publish and an administrator will review
-            the application.
+            Choose a pen name and your workspace opens straight away. There is no
+            application to wait on — every book you create is reviewed by an
+            administrator before it goes on sale.
           </p>
           <Link
-            href="/author/apply"
+            href="/author/start"
             className="mt-6 inline-block bg-navy px-6 py-3.5 text-[0.7rem] font-semibold tracking-[0.16em] text-ivory uppercase hover:bg-navy-soft"
           >
-            Open an author application
+            Become an author
           </Link>
         </Panel>
       </DashboardShell>

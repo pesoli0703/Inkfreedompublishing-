@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { DashboardShell, Empty, Panel } from "@/components/dashboard-shell";
 import { authorNav } from "@/lib/nav";
 import { requireViewer } from "@/lib/auth";
@@ -6,8 +7,17 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { formatDate, formatLabel } from "@/lib/format";
 
 export default async function AuthorBooksPage() {
-  await requireViewer("/author/books");
+  const viewer = await requireViewer("/author/books");
   const supabase = await createServerSupabaseClient();
+
+  if (supabase) {
+    const { data: author } = await supabase
+      .from("author_profiles")
+      .select("id")
+      .eq("user_id", viewer.id)
+      .maybeSingle();
+    if (!author) redirect("/author/start");
+  }
 
   const { data: books } = supabase
     ? await supabase
