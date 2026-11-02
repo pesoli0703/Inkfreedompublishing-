@@ -19,7 +19,7 @@ const steps = [
     number: "02",
     title: "Upload your eBook",
     body: "Add your title, description, cover image and the book itself as a PDF or EPUB. Files are stored privately and only ever served to a reader after a verified purchase.",
-    detail: ["Cover image", "PDF or EPUB manuscript"],
+    detail: ["Cover image", "PDF or EPUB file"],
   },
   {
     number: "03",

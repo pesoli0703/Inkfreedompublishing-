@@ -161,9 +161,9 @@ export default async function BookPage({ params }: { params: Promise<Params> }) 
                 </div>
                 <div>
                   <dt className="text-[0.65rem] tracking-[0.14em] text-charcoal-soft uppercase">
-                    Pages
+                    Format
                   </dt>
-                  <dd className="mt-1 text-charcoal">{book.pages || "—"}</dd>
+                  <dd className="mt-1 text-charcoal">eBook — PDF or EPUB</dd>
                 </div>
                 <div>
                   <dt className="text-[0.65rem] tracking-[0.14em] text-charcoal-soft uppercase">

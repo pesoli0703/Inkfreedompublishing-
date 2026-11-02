@@ -40,15 +40,47 @@ export async function decideApplicationAction(_prev: ActionState, formData: Form
   return done("Decision recorded.", "/admin/applications", "/admin");
 }
 
+/**
+ * Approve, reject, or send a book back for changes.
+ *
+ * Approving publishes in the same action when asked: the decision is recorded
+ * by `admin_moderate_book`, then `admin_set_publication` lists it. Both are the
+ * existing database functions — this only saves the administrator a second
+ * click and makes "approved means on sale" true, as authors expect.
+ */
 export async function moderateBookAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const supabase = await adminClient();
   if (!supabase) return { ok: false, message: "Administrator session required." };
+
+  const bookId = text(formData, "book_id");
+  const decision = text(formData, "decision");
+  if (!bookId) return { ok: false, message: "No book selected." };
+
   const { error } = await supabase.rpc("admin_moderate_book", {
-    p_book_id: text(formData, "book_id"),
-    p_decision: text(formData, "decision"),
+    p_book_id: bookId,
+    p_decision: decision,
     p_note: text(formData, "note"),
   });
   if (error) return failure(error);
+
+  const publish = decision === "approved" && text(formData, "publish") !== "false";
+  if (publish) {
+    const { error: publishError } = await supabase.rpc("admin_set_publication", {
+      p_book_id: bookId,
+      p_publish: true,
+    });
+    if (publishError) {
+      return {
+        ok: false,
+        message: `Approved, but could not publish: ${publishError.message}`,
+      };
+    }
+    revalidatePath("/books");
+    revalidatePath("/");
+    revalidatePath("/categories");
+    return done("Approved and published to the bookstore.", "/admin/books", "/admin");
+  }
+
   return done("Moderation recorded.", "/admin/books", "/admin");
 }
 

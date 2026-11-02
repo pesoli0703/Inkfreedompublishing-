@@ -13,9 +13,7 @@ type Offer = {
 };
 
 const FORMAT_LABEL: Record<string, string> = {
-  paperback: "Paperback",
-  hardcover: "Hardcover",
-  ebook: "Ebook",
+  ebook: "eBook — PDF or EPUB, downloaded after purchase",
 };
 
 export function LivePurchasePanel({

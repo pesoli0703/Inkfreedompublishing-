@@ -56,13 +56,12 @@ const coverFor = (slug: string, index: number): CoverDesign => {
   return { ...palette, motif: MOTIFS[hash(slug) % MOTIFS.length] };
 };
 
+/** eBooks only: every offer is a digital edition. */
 const FORMAT_LABELS: Record<string, string> = {
-  paperback: "Paperback",
-  hardcover: "Hardcover",
-  ebook: "Ebook",
+  ebook: "eBook",
 };
 
-const FORMAT_ORDER = ["hardcover", "paperback", "ebook"];
+const FORMAT_ORDER = ["ebook"];
 
 export const formatLabelFor = (format: string) =>
   FORMAT_LABELS[format] ?? format.replace(/_/g, " ");

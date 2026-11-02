@@ -32,6 +32,9 @@ export default async function LibraryPage({
 
   const { data: entitlements } = await supabase
     .from("entitlements")
+    // `book_files` is deliberately not joined: only the author and staff may
+    // read those rows. The download route resolves the current file on the
+    // server after checking this reader's entitlement.
     .select("id, granted_at, kind, books(id, book_code, title, slug, cover_path), order_id")
     .is("revoked_at", null)
     .order("granted_at", { ascending: false });
@@ -75,7 +78,7 @@ export default async function LibraryPage({
                         {book?.book_code ?? "—"}
                       </p>
                       <p className="mt-1 text-[0.72rem] text-charcoal-soft">
-                        Added {formatDate(row.granted_at)} · {row.kind === "digital" ? "Ebook" : "Print"}
+                        Added {formatDate(row.granted_at)} · eBook
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -87,12 +90,14 @@ export default async function LibraryPage({
                           Details
                         </Link>
                       )}
-                      <a
-                        href={book ? `/api/download/${book.id}` : "#"}
-                        className="bg-navy px-4 py-2.5 text-[0.68rem] font-semibold tracking-[0.16em] text-ivory uppercase transition-colors hover:bg-navy-soft"
-                      >
-                        Download
-                      </a>
+                      {book && (
+                        <a
+                          href={`/api/download/${book.id}`}
+                          className="bg-navy px-4 py-2.5 text-[0.68rem] font-semibold tracking-[0.16em] text-ivory uppercase transition-colors hover:bg-navy-soft"
+                        >
+                          Download eBook
+                        </a>
+                      )}
                     </div>
                   </li>
                 );
