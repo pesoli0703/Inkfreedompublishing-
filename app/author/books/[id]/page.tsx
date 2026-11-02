@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DashboardShell, Panel } from "@/components/dashboard-shell";
 import { BookFileForm } from "@/components/book-file-form";
+import { CoverUploadForm } from "@/components/cover-upload-form";
 import { EditBookForm, type EditableBook } from "@/components/edit-book-form";
 import { SubmitBookButton } from "@/components/submit-book-button";
 import { authorNav } from "@/lib/nav";
@@ -135,6 +136,7 @@ export default async function AuthorBookPage({ params }: { params: Promise<{ id:
               </div>
             </dl>
           </div>
+          <CoverUploadForm bookId={book.id} />
         </Panel>
 
         <Panel title="Price">

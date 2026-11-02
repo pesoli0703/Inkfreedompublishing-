@@ -84,3 +84,31 @@ export function priceCurrencyOptions(
       .map((code) => ({ code, label: names[code] ?? code })),
   ];
 }
+
+/**
+ * The Content-Type to send with an upload.
+ *
+ * Browsers are inconsistent here: an EPUB from Android often arrives with an
+ * empty type, and Storage rejects `application/octet-stream` against the
+ * bucket's allowed list. The extension we already validate is the better source.
+ */
+export function contentTypeFor(name: string): string | undefined {
+  const extension = name.toLowerCase().includes(".")
+    ? name.toLowerCase().split(".").pop() ?? ""
+    : "";
+  switch (extension) {
+    case "pdf":
+      return "application/pdf";
+    case "epub":
+      return "application/epub+zip";
+    case "jpg":
+    case "jpeg":
+      return "image/jpeg";
+    case "png":
+      return "image/png";
+    case "webp":
+      return "image/webp";
+    default:
+      return undefined;
+  }
+}

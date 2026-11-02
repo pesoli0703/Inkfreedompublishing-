@@ -3,7 +3,6 @@
 import { useActionState } from "react";
 import { updateBookAction, type ActionState } from "@/app/author/actions";
 import { SubmitButton } from "@/components/form-feedback";
-import { EBOOK_ACCEPT, COVER_ACCEPT } from "@/lib/ebooks";
 
 export type EditableBook = {
   id: string;
@@ -77,19 +76,9 @@ export function EditBookForm({
         />
       </label>
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <label className={label}>
-          Replace cover (optional)
-          <input type="file" name="cover" accept={COVER_ACCEPT} className={field} />
-        </label>
-        <label className={label}>
-          Replace eBook file (optional)
-          <input type="file" name="ebook" accept={EBOOK_ACCEPT} className={field} />
-        </label>
-      </div>
       <p className="text-[0.75rem] leading-relaxed text-charcoal-soft">
-        Leave the file fields empty to keep what is already uploaded. The eBook
-        file is what a buyer downloads; the cover is only for the bookstore.
+        The cover and the eBook file are changed in the panels below, so a large
+        upload never has to be sent twice.
       </p>
 
       <div className="flex flex-wrap items-center gap-4">

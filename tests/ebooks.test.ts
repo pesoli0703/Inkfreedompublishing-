@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   COVER_MAX_BYTES,
+  contentTypeFor,
   EBOOK_MAX_BYTES,
   describeEbookFile,
   ebookKindLabel,
@@ -59,6 +60,20 @@ describe("priceCurrencyOptions", () => {
   it("only offers a currency the platform holds a rate for", () => {
     const options = priceCurrencyOptions([{ quote_currency: "usd" }]);
     expect(options.map((option) => option.code)).toEqual(["NGN", "USD"]);
+  });
+});
+
+describe("contentTypeFor", () => {
+  it("names the exact MIME types the private buckets allow", () => {
+    expect(contentTypeFor("novel.pdf")).toBe("application/pdf");
+    expect(contentTypeFor("novel.epub")).toBe("application/epub+zip");
+    expect(contentTypeFor("cover.JPG")).toBe("image/jpeg");
+    expect(contentTypeFor("cover.webp")).toBe("image/webp");
+  });
+
+  it("never falls back to a type Storage rejects", () => {
+    expect(contentTypeFor("novel.docx")).toBeUndefined();
+    expect(contentTypeFor("novel.pdf")).not.toBe("application/octet-stream");
   });
 });
 
