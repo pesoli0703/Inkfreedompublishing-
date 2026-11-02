@@ -44,9 +44,9 @@ export default function RegisterPage() {
             Open an account
           </h1>
           <p className="mt-5 max-w-md text-[0.95rem] leading-relaxed text-charcoal-soft">
-            One account covers buying, reading and — if your application is
-            approved — publishing. You can browse the catalogue without an
-            account.
+            One account covers buying, reading and publishing. Your author
+            workspace opens the moment you choose a pen name — no application to
+            wait on. You can browse the catalogue without an account.
           </p>
 
           <ol className="mt-9 space-y-6">

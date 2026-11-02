@@ -35,9 +35,11 @@ export default function TermsPage() {
           password confidential. Accounts are personal; do not share credentials.
         </p>
         <p>
-          Reader accounts are created immediately. Author access is only granted
-          after an application is approved by a reviewer. No one can promote
-          themselves to author or administrator through the website.
+          Reader accounts are created immediately. Author access opens as soon as
+          you choose a pen name in your own account — there is no application to
+          be approved, and no publishing contract is signed. Every book you
+          upload is reviewed by an editor before it is listed. No one can promote
+          themselves to administrator through the website.
         </p>
       </Clause>
 
