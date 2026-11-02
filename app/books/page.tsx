@@ -9,6 +9,7 @@ import {
   type SortKey,
 } from "@/lib/catalogue";
 import { loadCategories, loadLiveCatalogue } from "@/lib/catalogue-live";
+import { groupCategoriesBySection, sectionForSlug } from "@/lib/category-sections";
 
 export const metadata: Metadata = {
   title: "Discover Books",
@@ -46,6 +47,10 @@ export default async function BooksPage({
   ]);
 
   const activeCategory = categories.find((item) => item.slug === category);
+  const activeSection = activeCategory
+    ? sectionForSlug(activeCategory.section)
+    : undefined;
+  const groups = groupCategoriesBySection(categories);
   const results = browseBooks(catalogue, {
     q,
     category: activeCategory?.slug,
@@ -74,6 +79,19 @@ export default async function BooksPage({
               /
             </span>
             <span className="text-navy">Books</span>
+            {activeSection ? (
+              <>
+                <span aria-hidden="true" className="mx-2">
+                  /
+                </span>
+                <Link
+                  href={`/categories#${activeSection.slug}`}
+                  className="transition-colors hover:text-navy"
+                >
+                  {activeSection.name}
+                </Link>
+              </>
+            ) : null}
             {activeCategory ? (
               <>
                 <span aria-hidden="true" className="mx-2">
@@ -93,7 +111,7 @@ export default async function BooksPage({
               <p className="mt-4 max-w-xl text-[0.95rem] leading-relaxed text-charcoal-soft">
                 {activeCategory
                   ? activeCategory.blurb
-                  : "Independent titles across fiction, poetry, essays, memoir, business and children’s books."}
+                  : "Independent titles across every shelf — fiction, non-fiction, business, poetry and drama, children’s books and academic texts."}
               </p>
               <p className="mt-4 inline-flex border border-line bg-white px-3 py-1.5 text-[0.66rem] font-medium tracking-[0.12em] text-charcoal-soft uppercase">
                 {total === 0
@@ -109,23 +127,59 @@ export default async function BooksPage({
       </section>
 
       <section className="container-editorial py-10 sm:py-14">
-        <div className="flex flex-col gap-5 border-b border-line pb-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-1">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-5">
+          <div className="flex flex-wrap items-center gap-2">
             <FilterChip href={chipHref()} active={!activeCategory}>
               All books
             </FilterChip>
-            {categories.map((item) => (
-              <FilterChip
-                key={item.slug}
-                href={chipHref(item.slug)}
-                active={activeCategory?.slug === item.slug}
-              >
-                {item.name}
+            {activeCategory ? (
+              <FilterChip href={chipHref(activeCategory.slug)} active>
+                {activeCategory.name}
               </FilterChip>
-            ))}
+            ) : null}
           </div>
           <SortSelect value={sort} />
         </div>
+
+        {groups.length > 0 ? (
+          <details className="group border-b border-line py-4">
+            <summary className="flex cursor-pointer list-none items-center gap-2 text-[0.7rem] font-semibold tracking-[0.14em] text-charcoal-soft uppercase transition-colors hover:text-navy [&::-webkit-details-marker]:hidden">
+              <span className="inline-block transition-transform duration-200 group-open:rotate-90">
+                ›
+              </span>
+              Browse all {categories.length} shelves
+            </summary>
+
+            <div className="mt-6 grid gap-7 sm:grid-cols-2 lg:grid-cols-3">
+              {groups.map((group) => (
+                <div key={group.section.slug}>
+                  <p className="text-[0.66rem] font-semibold tracking-[0.16em] text-gold-deep uppercase">
+                    {group.section.name}
+                  </p>
+                  <ul className="mt-3 space-y-1.5">
+                    {group.categories.map((item) => (
+                      <li key={item.slug}>
+                        <Link
+                          href={chipHref(item.slug)}
+                          aria-current={
+                            activeCategory?.slug === item.slug ? "page" : undefined
+                          }
+                          className={`text-[0.85rem] transition-colors ${
+                            activeCategory?.slug === item.slug
+                              ? "font-semibold text-navy"
+                              : "text-charcoal-soft hover:text-navy"
+                          }`}
+                        >
+                          {item.name}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </details>
+        ) : null}
 
         <div className="mt-7 flex flex-wrap items-baseline justify-between gap-3">
           <p className="text-[0.8rem] text-charcoal-soft">

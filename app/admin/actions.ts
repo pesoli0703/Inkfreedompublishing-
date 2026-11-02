@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getViewer } from "@/lib/auth";
+import { CATEGORY_SECTIONS } from "@/lib/category-sections";
 
 export type ActionState = { ok: boolean; message: string } | null;
 
@@ -254,13 +255,21 @@ export async function upsertCategoryAction(_prev: ActionState, formData: FormDat
   if (!supabase) return { ok: false, message: "Administrator session required." };
 
   const id = text(formData, "id");
+  const section = text(formData, "section") || "non-fiction";
   const patch = {
     name: text(formData, "name"),
     blurb: text(formData, "blurb") || null,
+    note: text(formData, "note") || null,
+    section,
     is_active: formData.get("is_active") === "on",
-    display_order: Number(formData.get("display_order") ?? 0),
+    // The column is sort_order; the old form posted display_order, which meant
+    // every edit silently failed the insert/update.
+    sort_order: Number(formData.get("sort_order") ?? 0),
   };
   if (!patch.name) return { ok: false, message: "A category name is required." };
+  if (!CATEGORY_SECTIONS.some((entry) => entry.slug === section)) {
+    return { ok: false, message: "Choose one of the published sections." };
+  }
 
   const { error } = id
     ? await supabase.from("categories").update(patch).eq("id", id)

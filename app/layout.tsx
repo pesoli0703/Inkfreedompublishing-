@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     template: "%s · INKFREEDOMPUBLISHING",
   },
   description:
-    "A premium independent publishing house and digital marketplace for considered books — literary fiction, poetry, essays, memoir and children's titles.",
+    "A premium independent publishing house and digital marketplace for considered books — fiction and non-fiction, poetry and drama, business, children's, young adult and academic titles.",
   keywords: [
     "independent publishing",
     "book marketplace",

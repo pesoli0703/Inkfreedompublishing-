@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { createBookAction, type ActionState } from "@/app/author/actions";
+import { CATEGORY_SECTIONS } from "@/lib/category-sections";
 import { SubmitButton } from "@/components/form-feedback";
 
 const field =
@@ -9,12 +10,21 @@ const field =
 const label =
   "block text-[0.66rem] font-semibold tracking-[0.14em] text-charcoal-soft uppercase";
 
-export function NewBookForm({
-  categories,
-}: {
-  categories: { id: string; name: string }[];
-}) {
+type ShelfOption = { id: string; name: string; section: string };
+
+export function NewBookForm({ categories }: { categories: ShelfOption[] }) {
   const [state, formAction] = useActionState<ActionState, FormData>(createBookAction, null);
+
+  // Same grouping as the storefront: sections in their published order, then
+  // anything unfiled at the end so a new shelf is never unreachable.
+  const sections = CATEGORY_SECTIONS.map((section) => ({
+    section,
+    shelves: categories.filter((category) => category.section === section.slug),
+  })).filter((entry) => entry.shelves.length > 0);
+
+  const unfiled = categories.filter(
+    (category) => !CATEGORY_SECTIONS.some((section) => section.slug === category.section),
+  );
 
   return (
     <form action={formAction} className="space-y-6">
@@ -30,10 +40,19 @@ export function NewBookForm({
         <label className={label}>
           Category
           <select name="category_id" className={field} required>
-            <option value="">Choose a category</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
+            <option value="">Choose a shelf</option>
+            {sections.map(({ section, shelves }) => (
+              <optgroup key={section.slug} label={section.name}>
+                {shelves.map((shelf) => (
+                  <option key={shelf.id} value={shelf.id}>
+                    {shelf.name}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+            {unfiled.map((shelf) => (
+              <option key={shelf.id} value={shelf.id}>
+                {shelf.name}
               </option>
             ))}
           </select>

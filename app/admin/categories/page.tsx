@@ -3,6 +3,7 @@ import { DashboardShell, Empty, Panel } from "@/components/dashboard-shell";
 import { AdminForm, adminField } from "@/components/admin-form";
 import { setFeaturedAction, upsertCategoryAction } from "@/app/admin/actions";
 import { adminNav } from "@/lib/nav";
+import { CATEGORY_SECTIONS } from "@/lib/category-sections";
 import { requireAdmin } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -12,7 +13,11 @@ export default async function AdminCategoriesPage() {
 
   const [{ data: categories }, { data: books }, { data: authors }] = supabase
     ? await Promise.all([
-        supabase.from("categories").select("id, slug, name, blurb, is_active, display_order").order("display_order"),
+        supabase
+          .from("categories")
+          .select("id, slug, name, blurb, note, section, is_active, sort_order")
+          .order("section")
+          .order("sort_order"),
         supabase
           .from("books")
           .select("id, title, slug, status, is_featured, featured_rank")
@@ -44,7 +49,15 @@ export default async function AdminCategoriesPage() {
                     <input type="hidden" name="id" value={category.id} />
                     <div className="grid gap-2 sm:grid-cols-3">
                       <input name="name" defaultValue={category.name} className={adminField} />
-                      <input name="display_order" type="number" defaultValue={category.display_order} className={adminField} />
+                      <select name="section" defaultValue={category.section} className={adminField}>
+                        {CATEGORY_SECTIONS.map((section) => (
+                          <option key={section.slug} value={section.slug}>{section.name}</option>
+                        ))}
+                      </select>
+                      <input name="sort_order" type="number" defaultValue={category.sort_order} className={adminField} />
+                    </div>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                      <input name="note" defaultValue={category.note ?? ""} placeholder="Short line, e.g. Novels & stories" className={adminField} />
                       <label className="flex items-center gap-2 text-[0.78rem] text-charcoal">
                         <input type="checkbox" name="is_active" defaultChecked={category.is_active ?? false} /> Visible
                       </label>
@@ -64,7 +77,15 @@ export default async function AdminCategoriesPage() {
               <div className="grid gap-3 sm:grid-cols-3">
                 <input name="name" required placeholder="Name" className={adminField} />
                 <input name="slug" placeholder="slug (optional)" className={adminField} />
-                <input name="display_order" type="number" defaultValue={99} className={adminField} />
+                <select name="section" defaultValue="non-fiction" className={adminField}>
+                  {CATEGORY_SECTIONS.map((section) => (
+                    <option key={section.slug} value={section.slug}>{section.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <input name="note" placeholder="Short line, e.g. Novels & stories" className={adminField} />
+                <input name="sort_order" type="number" defaultValue={999} className={adminField} />
               </div>
               <input name="blurb" placeholder="Short description" className={adminField} />
               <label className="flex items-center gap-2 text-[0.78rem] text-charcoal">

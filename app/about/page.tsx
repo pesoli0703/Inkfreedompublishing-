@@ -213,12 +213,13 @@ export default async function AboutPage() {
           <div className="lg:col-span-7">
             <p className="eyebrow text-gold-soft">The opportunity</p>
             <h2 className="mt-4 max-w-xl font-display text-3xl leading-[1.12] sm:text-4xl">
-              If you have a finished manuscript, we would like to read it.
+              If you have a finished manuscript, the shelf is open.
             </h2>
             <p className="mt-4 max-w-xl text-[0.95rem] leading-relaxed text-ivory/65">
-              We are opening the list across fiction, poetry, essays, memoir and
-              children’s books. Submissions are read by an editor and answered
-              either way.
+              We publish across the whole shop — fiction and non-fiction, poetry
+              and drama, business, children’s books and academic texts. Open your
+              workspace, upload the file, and an editor reads it before it goes on
+              sale.
             </p>
           </div>
           <div className="flex flex-wrap gap-3 lg:col-span-5 lg:justify-end">

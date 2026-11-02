@@ -36,7 +36,7 @@ export default async function AuthorBookPage({ params }: { params: Promise<{ id:
     supabase.from("book_formats").select("id, format, is_available").eq("book_id", id),
     supabase.from("book_moderation_events").select("id, from_status, to_status, action, note, created_at").eq("book_id", id).order("created_at", { ascending: false }),
     supabase.from("book_prices").select("book_format_id, currency, price_minor, is_active").eq("is_active", true),
-    supabase.from("categories").select("id, name").eq("is_active", true).order("sort_order"),
+    supabase.from("categories").select("id, name, section").eq("is_active", true).order("sort_order"),
   ]);
 
   const formatIds = new Set((formats ?? []).map((format) => format.id));

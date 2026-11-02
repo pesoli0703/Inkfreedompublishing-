@@ -236,7 +236,7 @@ export async function loadCategories(): Promise<Category[]> {
   const [{ data: rows }, catalogue] = await Promise.all([
     supabase
       .from("categories")
-      .select("slug, name, blurb, note, sort_order")
+      .select("slug, name, blurb, note, section, sort_order")
       .eq("is_active", true)
       .order("sort_order"),
     loadLiveCatalogue(),
@@ -250,6 +250,7 @@ export async function loadCategories(): Promise<Category[]> {
       name: string;
       blurb: string;
       note: string;
+      section: string;
     }[]
   ).map((row) => ({
     ...row,
