@@ -33,16 +33,24 @@ export async function GET(
   }
 
   const admin = createAdminClient();
+
+  // A reader may choose the edition they bought — the PDF or the EPUB the
+  // author uploaded. Without a preference the most recent current file wins.
+  const requested = new URL(request.url).searchParams.get("format");
+  const wantedKind = requested === "pdf" || requested === "epub" ? (requested === "pdf" ? "pdf" : "ebook") : null;
+
   const { data: files } = await admin
     .from("book_files")
-    .select("id")
+    .select("id, kind")
     .eq("book_id", bookId)
     .eq("is_current", true)
     .in("kind", ["ebook", "pdf"])
-    .order("created_at", { ascending: false })
-    .limit(1);
+    .order("created_at", { ascending: false });
 
-  const fileId = files?.[0]?.id;
+  const chosen = wantedKind
+    ? files?.find((file) => file.kind === wantedKind) ?? files?.[0]
+    : files?.[0];
+  const fileId = chosen?.id;
   if (!fileId) {
     return NextResponse.redirect(`${origin}/dashboard/library?error=no_file`);
   }

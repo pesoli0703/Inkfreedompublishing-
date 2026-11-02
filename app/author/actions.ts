@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getViewer } from "@/lib/auth";
+import { EBOOK_MAX_BYTES, COVER_MAX_BYTES, describeEbookFile } from "@/lib/ebooks";
 
 export type ActionState = { ok: boolean; message: string } | null;
 
@@ -25,6 +26,14 @@ const slugify = (value: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 70);
+
+/** First sentence of the description, used as the card hook when none is typed. */
+function hookFromDescription(description: string): string {
+  const flat = description.replace(/\s+/g, " ").trim();
+  if (flat.length === 0) return "";
+  const sentence = flat.match(/^.{1,160}?[.!?](\s|$)/)?.[0] ?? flat;
+  return sentence.trim().slice(0, 400);
+}
 
 /**
  * Self-service onboarding. A signed-in reader becomes a published-eligible
@@ -164,21 +173,115 @@ export async function saveAuthorProfileAction(
   return { ok: true, message: "Author profile saved." };
 }
 
-type FormatInput = { format: "paperback" | "hardcover" | "ebook"; priceMajor: number };
+/* ------------------------------------------------------------------------- */
+/* eBook upload                                                              */
+/* ------------------------------------------------------------------------- */
 
-function readFormats(formData: FormData): FormatInput[] {
-  const formats: FormatInput[] = [];
-  for (const format of ["paperback", "hardcover", "ebook"] as const) {
-    if (formData.get(`format_${format}`) === "on") {
-      const price = Number(formData.get(`price_${format}`) ?? 0);
-      if (!Number.isFinite(price) || price <= 0) continue;
-      formats.push({ format, priceMajor: price });
-    }
-  }
-  return formats;
+/** Currencies an author may price in. Everything else is derived from NGN. */
+const PRICE_CURRENCIES = ["NGN", "USD", "GBP", "EUR"] as const;
+
+type UploadedFile = {
+  bucket: "book-files" | "book-covers";
+  path: string;
+  mimeType: string;
+  sizeBytes: number;
+};
+
+type ServerClient = NonNullable<
+  Awaited<ReturnType<typeof createServerSupabaseClient>>
+>;
+
+async function storeFile(
+  supabase: ServerClient,
+  bucket: UploadedFile["bucket"],
+  path: string,
+  file: File,
+): Promise<{ file?: UploadedFile; error?: ActionState }> {
+  const { error } = await supabase.storage
+    .from(bucket)
+    .upload(path, file, {
+      upsert: true,
+      contentType: file.type || undefined,
+    });
+  if (error) return { error: failure(error) };
+  return {
+    file: {
+      bucket,
+      path,
+      mimeType: file.type || "application/octet-stream",
+      sizeBytes: file.size,
+    },
+  };
 }
 
-export async function createBookAction(
+/**
+ * Writes the current eBook file for a book.
+ *
+ * One file, one format, and a version that always increases — the unique index
+ * on (book_id, kind, format, version) and the one-current-per-kind index mean a
+ * straight re-insert with version 1 would collide, which is why replacing a
+ * file used to fail.
+ */
+async function attachEbookFile(
+  supabase: ServerClient,
+  bookId: string,
+  uploaderId: string,
+  file: File,
+): Promise<ActionState> {
+  const described = describeEbookFile(file);
+  if (!described) {
+    return { ok: false, message: "Attach a PDF or an EPUB file." };
+  }
+  if (file.size > EBOOK_MAX_BYTES) {
+    return { ok: false, message: "The eBook file must be 200 MB or smaller." };
+  }
+
+  const path = `${bookId}/${described.kind}-${Date.now()}.${described.extension}`;
+  const stored = await storeFile(supabase, "book-files", path, file);
+  if (!stored.file) return stored.error ?? null;
+
+  const { data: previous } = await supabase
+    .from("book_files")
+    .select("id, version")
+    .eq("book_id", bookId)
+    .eq("kind", described.kind)
+    .order("version", { ascending: false })
+    .limit(1);
+
+  const version = Number(previous?.[0]?.version ?? 0) + 1;
+
+  await supabase
+    .from("book_files")
+    .update({ is_current: false })
+    .eq("book_id", bookId)
+    .eq("kind", described.kind);
+
+  const { error } = await supabase.from("book_files").insert({
+    book_id: bookId,
+    kind: described.kind,
+    // Digital only: a PDF and an EPUB are both editions of the ebook.
+    format: "ebook",
+    storage_bucket: "book-files",
+    storage_path: path,
+    mime_type: stored.file.mimeType,
+    size_bytes: file.size,
+    version,
+    is_current: true,
+    scan_status: "pending",
+    uploaded_by: uploaderId,
+  });
+  if (error) return failure(error);
+  return { ok: true, message: "eBook file attached." };
+}
+
+/**
+ * Upload a new eBook.
+ *
+ * One screen: title, description, author name, cover, PDF or EPUB, price and
+ * currency. Saving as a draft and submitting for approval are the same data —
+ * the second just also asks an administrator to review it.
+ */
+export async function createEbookAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
@@ -189,96 +292,220 @@ export async function createBookAction(
 
   const { data: author } = await supabase
     .from("author_profiles")
-    .select("id, status")
+    .select("id, status, pen_name")
     .eq("user_id", viewer.id)
     .maybeSingle();
 
-  if (!author) {
-    return { ok: false, message: "Start publishing first — choose a pen name." };
-  }
+  if (!author) return { ok: false, message: "Choose a pen name first — that is your author profile." };
   if (author.status === "suspended") {
     return { ok: false, message: "This publishing account is suspended." };
   }
 
   const title = text(formData, "title");
-  if (title.length < 2) return { ok: false, message: "A title is required." };
+  if (title.length < 2) return { ok: false, message: "Enter a book title." };
 
-  const formats = readFormats(formData);
-  if (formats.length === 0) {
-    return { ok: false, message: "Add at least one format with an NGN price." };
-  }
-
-  const description = text(formData, "description")
+  const descriptionRaw = text(formData, "description");
+  const description = descriptionRaw
     .split(/\n\s*\n/)
     .map((paragraph) => paragraph.trim())
     .filter(Boolean);
+  if (description.length === 0) {
+    return { ok: false, message: "Write a short description of the book." };
+  }
 
-  const baseSlug = slugify(text(formData, "slug") || title) || "untitled";
+  const priceMajor = Number(formData.get("price") ?? 0);
+  if (!Number.isFinite(priceMajor) || priceMajor <= 0) {
+    return { ok: false, message: "Set a selling price greater than zero." };
+  }
+  const requestedCurrency = (text(formData, "currency") || "NGN").toUpperCase();
+  const currency = (PRICE_CURRENCIES as readonly string[]).includes(requestedCurrency)
+    ? requestedCurrency
+    : "NGN";
+
+  const cover = formData.get("cover");
+  if (!(cover instanceof File) || cover.size === 0) {
+    return { ok: false, message: "Attach a cover image (JPG, PNG or WebP)." };
+  }
+  if (!cover.type.startsWith("image/")) {
+    return { ok: false, message: "The cover must be an image file." };
+  }
+  if (cover.size > COVER_MAX_BYTES) {
+    return { ok: false, message: "The cover image must be 10 MB or smaller." };
+  }
+
+  const ebook = formData.get("ebook");
+  if (!(ebook instanceof File) || ebook.size === 0) {
+    return { ok: false, message: "Attach the eBook file — a PDF or an EPUB." };
+  }
+  const described = describeEbookFile(ebook);
+  if (!described) return { ok: false, message: "The eBook must be a PDF or an EPUB file." };
+  if (ebook.size > EBOOK_MAX_BYTES) {
+    return { ok: false, message: "The eBook file must be 200 MB or smaller." };
+  }
+
+  const categoryId = text(formData, "category_id");
+  if (!categoryId) return { ok: false, message: "Choose a category." };
+
+  // Resolve the non-NGN price before anything is written: an unsupported
+  // currency must not leave a half-created draft behind.
+  const ngnMinor = Math.round(priceMajor * 100);
+  let convertedMinor: number | null = null;
+  if (currency !== "NGN") {
+    const { data: rate } = await supabase
+      .from("fx_rates")
+      .select("rate")
+      .eq("base_currency", "NGN")
+      .eq("quote_currency", currency)
+      .order("fetched_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!rate?.rate) {
+      return {
+        ok: false,
+        message: `No ${currency} exchange rate is configured yet, so this price cannot be set in ${currency}. Price in NGN — the bookstore converts it once rates are loaded.`,
+      };
+    }
+    convertedMinor = Math.round(ngnMinor * Number(rate.rate));
+  }
+
+  const authorName = text(formData, "author_name");
+  if (authorName.length >= 2 && authorName !== author.pen_name) {
+    const { error: nameError } = await supabase
+      .from("author_profiles")
+      .update({ pen_name: authorName.slice(0, 120) })
+      .eq("id", author.id);
+    if (nameError) return failure(nameError);
+  }
+
+  const hook =
+    text(formData, "hook") || hookFromDescription(descriptionRaw) || title.slice(0, 160);
+
+  const baseSlug = slugify(title) || "untitled";
   const slug = `${baseSlug}-${Date.now().toString(36).slice(-4)}`;
 
   const { data: book, error: bookError } = await supabase
     .from("books")
     .insert({
       author_id: author.id,
-      primary_category_id: text(formData, "category_id") || null,
+      primary_category_id: categoryId,
       slug,
       title,
-      subtitle: text(formData, "subtitle") || null,
-      hook: text(formData, "hook") || null,
+      hook,
       description_paragraphs: description,
-      excerpt_label: text(formData, "excerpt_label") || null,
-      excerpt_body: text(formData, "excerpt_body") || null,
-      themes: text(formData, "themes")
-        .split(",")
-        .map((theme) => theme.trim())
-        .filter(Boolean),
-      language: text(formData, "language") || "English",
-      page_count: Number(formData.get("page_count")) || null,
+      language: "English",
       status: "draft",
-      rights_declared_at: formData.get("rights") === "on" ? new Date().toISOString() : null,
+      rights_declared_at: new Date().toISOString(),
     })
     .select("id")
     .single();
 
-  if (bookError) return failure(bookError);
+  if (bookError || !book) return failure(bookError);
 
-  const { error: formatsError } = await supabase.from("book_formats").insert(
-    formats.map(({ format }) => ({ book_id: book.id, format, is_available: true })),
+  // Cover first: the public catalogue needs it, and submission refuses without.
+  const coverExtension = cover.name.split(".").pop()?.toLowerCase() ?? "jpg";
+  const coverStored = await storeFile(
+    supabase,
+    "book-covers",
+    `${book.id}/cover.${coverExtension}`,
+    cover,
   );
-  if (formatsError) return failure(formatsError);
+  if (!coverStored.file) return coverStored.error ?? null;
+  await supabase
+    .from("books")
+    .update({ cover_path: coverStored.file.path })
+    .eq("id", book.id);
 
-  const { data: createdFormats, error: readError } = await supabase
+  // One eBook format, priced once.
+  const { data: format, error: formatError } = await supabase
     .from("book_formats")
-    .select("id, format")
-    .eq("book_id", book.id);
-  if (readError) return failure(readError);
+    .insert({ book_id: book.id, format: "ebook", is_available: true })
+    .select("id")
+    .single();
+  if (formatError || !format) return failure(formatError);
 
-  const { error: priceError } = await supabase.from("book_prices").insert(
-    (createdFormats ?? []).map((row) => {
-      const match = formats.find((entry) => entry.format === row.format);
-      return {
-        book_format_id: row.id,
-        currency: "NGN",
-        price_minor: Math.round((match?.priceMajor ?? 0) * 100),
-        is_active: true,
-      };
-    }),
-  );
+  // NGN is always the base price the catalogue and the submit checks depend on.
+  const priceRows = [
+    { book_format_id: format.id, currency: "NGN", price_minor: ngnMinor, is_active: true },
+  ];
+  if (convertedMinor !== null) {
+    priceRows.push({
+      book_format_id: format.id,
+      currency,
+      price_minor: convertedMinor,
+      is_active: true,
+    });
+  }
+
+  const { error: priceError } = await supabase.from("book_prices").insert(priceRows);
   if (priceError) return failure(priceError);
 
-  const cover = formData.get("cover");
-  if (cover instanceof File && cover.size > 0) {
-    const extension = cover.name.split(".").pop()?.toLowerCase() ?? "jpg";
-    const path = `${book.id}/cover.${extension}`;
-    const { error: coverError } = await supabase.storage
-      .from("book-covers")
-      .upload(path, cover, { upsert: true, contentType: cover.type || undefined });
-    if (!coverError) {
-      await supabase.from("books").update({ cover_path: path }).eq("id", book.id);
+  const attached = await attachEbookFile(supabase, book.id, viewer.id, ebook);
+  if (attached && !attached.ok) {
+    return {
+      ok: false,
+      message: `${attached.message} The book is saved as a draft — open it to attach the file again.`,
+    };
+  }
+
+  const submit = text(formData, "intent") === "submit";
+  if (submit) {
+    const { error: submitError } = await supabase.rpc("book_submit", {
+      p_book_id: book.id,
+    });
+    if (submitError) {
+      return {
+        ok: false,
+        message: `${submitError.message} The book is saved as a draft — open it, fix that, then submit.`,
+      };
     }
   }
 
-  redirect(`/author/books/${book.id}`);
+  revalidatePath("/author");
+  revalidatePath("/author/books");
+  redirect(submit ? "/author/books?status=submitted" : `/author/books/${book.id}`);
+}
+
+/**
+ * Replaces the eBook file on an existing book — for a first attachment that
+ * failed, a correction an administrator asked for, or a new edition. Only the
+ * file changes; the price, cover and details stay as they are.
+ */
+export async function replaceEbookFileAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const viewer = await getViewer();
+  if (!viewer) return { ok: false, message: "Please sign in again." };
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) return { ok: false, message: "Accounts are not connected." };
+
+  const bookId = text(formData, "book_id");
+  const file = formData.get("ebook");
+  if (!bookId) return { ok: false, message: "Which book?" };
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, message: "Choose a PDF or EPUB file." };
+  }
+
+  const { data: book } = await supabase
+    .from("books")
+    .select("id, status")
+    .eq("id", bookId)
+    .maybeSingle();
+  if (!book) return { ok: false, message: "Book not found." };
+  if (["submitted", "published", "approved"].includes(String(book.status))) {
+    return {
+      ok: false,
+      message:
+        "This book is with an editor or already on sale. Ask for a change from the book page first.",
+    };
+  }
+
+  const result = await attachEbookFile(supabase, bookId, viewer.id, file);
+  if (result && !result.ok) return result;
+
+  revalidatePath(`/author/books/${bookId}`);
+  return { ok: true, message: "eBook file replaced." };
 }
 
 /**
@@ -316,7 +543,8 @@ export async function updateBookAction(
   const title = text(formData, "title");
   if (title.length < 2) return { ok: false, message: "A title is required." };
 
-  const description = text(formData, "description")
+  const descriptionRaw = text(formData, "description");
+  const description = descriptionRaw
     .split(/\n\s*\n/)
     .map((paragraph) => paragraph.trim())
     .filter(Boolean);
@@ -324,9 +552,9 @@ export async function updateBookAction(
     return { ok: false, message: "At least one description paragraph is required." };
   }
 
-  const formats = readFormats(formData);
-  if (formats.length === 0) {
-    return { ok: false, message: "Add at least one format with an NGN price." };
+  const priceMajor = Number(formData.get("price") ?? 0);
+  if (!Number.isFinite(priceMajor) || priceMajor <= 0) {
+    return { ok: false, message: "Set a selling price greater than zero." };
   }
 
   const { error: bookError } = await supabase
@@ -334,75 +562,48 @@ export async function updateBookAction(
     .update({
       primary_category_id: text(formData, "category_id") || null,
       title,
-      subtitle: text(formData, "subtitle") || null,
-      hook: text(formData, "hook") || null,
+      hook: text(formData, "hook") || hookFromDescription(descriptionRaw) || title.slice(0, 160),
       description_paragraphs: description,
-      excerpt_label: text(formData, "excerpt_label") || null,
-      excerpt_body: text(formData, "excerpt_body") || null,
-      themes: text(formData, "themes")
-        .split(",")
-        .map((theme) => theme.trim())
-        .filter(Boolean),
-      language: text(formData, "language") || "English",
-      page_count: Number(formData.get("page_count")) || null,
-      rights_declared_at:
-        formData.get("rights") === "on"
-          ? new Date().toISOString()
-          : undefined,
+      rights_declared_at: new Date().toISOString(),
     })
     .eq("id", bookId);
   if (bookError) return failure(bookError);
 
-  // Formats and their NGN prices. Unticking a format withdraws it from sale
-  // rather than deleting it, so existing order lines keep their reference.
-  const wanted = formats.map((entry) => entry.format);
-  const { error: retireError } = await supabase
+  // One ebook format, one NGN price.
+  const { data: existingFormat } = await supabase
     .from("book_formats")
-    .update({ is_available: false })
+    .select("id")
     .eq("book_id", bookId)
-    .not("format", "in", `(${wanted.join(",")})`);
-  if (retireError) return failure(retireError);
+    .eq("format", "ebook")
+    .maybeSingle();
 
-  for (const entry of formats) {
-    const { data: existing } = await supabase
+  let formatId = existingFormat?.id as string | undefined;
+  if (formatId) {
+    await supabase.from("book_formats").update({ is_available: true }).eq("id", formatId);
+  } else {
+    const { data: created, error } = await supabase
       .from("book_formats")
+      .insert({ book_id: bookId, format: "ebook", is_available: true })
       .select("id")
-      .eq("book_id", bookId)
-      .eq("format", entry.format)
-      .maybeSingle();
-
-    let formatId = existing?.id as string | undefined;
-    if (formatId) {
-      const { error } = await supabase
-        .from("book_formats")
-        .update({ is_available: true })
-        .eq("id", formatId);
-      if (error) return failure(error);
-    } else {
-      const { data: created, error } = await supabase
-        .from("book_formats")
-        .insert({ book_id: bookId, format: entry.format, is_available: true })
-        .select("id")
-        .single();
-      if (error) return failure(error);
-      formatId = created.id;
-    }
-
-    const { error: priceError } = await supabase.from("book_prices").upsert(
-      {
-        book_format_id: formatId,
-        currency: "NGN",
-        price_minor: Math.round(entry.priceMajor * 100),
-        is_active: true,
-      },
-      { onConflict: "book_format_id,currency" },
-    );
-    if (priceError) return failure(priceError);
+      .single();
+    if (error) return failure(error);
+    formatId = created.id;
   }
+
+  const { error: priceError } = await supabase.from("book_prices").upsert(
+    {
+      book_format_id: formatId,
+      currency: "NGN",
+      price_minor: Math.round(priceMajor * 100),
+      is_active: true,
+    },
+    { onConflict: "book_format_id,currency" },
+  );
+  if (priceError) return failure(priceError);
 
   const cover = formData.get("cover");
   if (cover instanceof File && cover.size > 0) {
-    if (cover.size > 10 * 1024 * 1024) {
+    if (cover.size > COVER_MAX_BYTES) {
       return { ok: false, message: "Cover images must be 10 MB or smaller." };
     }
     const extension = cover.name.split(".").pop()?.toLowerCase() ?? "jpg";
@@ -419,72 +620,30 @@ export async function updateBookAction(
     if (pathError) return failure(pathError);
   }
 
+  const ebook = formData.get("ebook");
+  if (ebook instanceof File && ebook.size > 0) {
+    const result = await attachEbookFile(supabase, bookId, viewer.id, ebook);
+    if (result && !result.ok) return result;
+  }
+
   revalidatePath(`/author/books/${bookId}`);
   revalidatePath("/author/books");
   return { ok: true, message: "Saved." };
 }
 
-export async function submitBookAction(bookId: string) {
-  const supabase = await createServerSupabaseClient();
-  if (!supabase) return;
-  await supabase.rpc("book_submit", { p_book_id: bookId });
-  revalidatePath("/author/books");
-  revalidatePath(`/author/books/${bookId}`);
-}
-
-export async function uploadBookFileAction(
-  _prev: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
+export async function submitBookAction(bookId: string): Promise<ActionState> {
   const viewer = await getViewer();
   if (!viewer) return { ok: false, message: "Please sign in again." };
   const supabase = await createServerSupabaseClient();
   if (!supabase) return { ok: false, message: "Accounts are not connected." };
 
-  const bookId = text(formData, "book_id");
-  const kind = text(formData, "kind");
-  const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) {
-    return { ok: false, message: "Choose a file to upload." };
-  }
-  if (!["ebook", "pdf", "sample", "interior"].includes(kind)) {
-    return { ok: false, message: "Unknown file kind." };
-  }
-  if (file.size > 200 * 1024 * 1024) {
-    return { ok: false, message: "Files must be 200 MB or smaller." };
-  }
-
-  const bucket = kind === "sample" ? "book-samples" : "book-files";
-  const extension = file.name.split(".").pop()?.toLowerCase() ?? "bin";
-  const path = `${bookId}/${kind}-${Date.now()}.${extension}`;
-
-  const { error: uploadError } = await supabase.storage
-    .from(bucket)
-    .upload(path, file, { contentType: file.type || undefined });
-  if (uploadError) return failure(uploadError);
-
-  await supabase
-    .from("book_files")
-    .update({ is_current: false })
-    .eq("book_id", bookId)
-    .eq("kind", kind);
-
-  const { error } = await supabase.from("book_files").insert({
-    book_id: bookId,
-    kind,
-    storage_bucket: bucket,
-    storage_path: path,
-    mime_type: file.type || "application/octet-stream",
-    size_bytes: file.size,
-    is_current: true,
-    version: 1,
-    scan_status: "pending",
-    uploaded_by: viewer.id,
-  });
+  const { error } = await supabase.rpc("book_submit", { p_book_id: bookId });
   if (error) return failure(error);
 
+  revalidatePath("/author");
+  revalidatePath("/author/books");
   revalidatePath(`/author/books/${bookId}`);
-  return { ok: true, message: "File uploaded. It is private and served only through signed links." };
+  return { ok: true, message: "Submitted for review." };
 }
 
 export async function savePayoutAccountAction(

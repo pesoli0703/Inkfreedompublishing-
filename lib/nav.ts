@@ -33,7 +33,7 @@ export const authorNav = (counts?: { review?: number; changes?: number }): NavSe
     label: "Workspace",
     items: [
       { href: "/author", label: "Overview" },
-      { href: "/author/books", label: "My books", badge: counts?.review },
+      { href: "/author/books", label: "My eBooks", badge: counts?.review },
       { href: "/author/earnings", label: "Sales & earnings" },
       { href: "/author/settings", label: "Author profile" },
     ],

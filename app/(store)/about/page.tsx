@@ -147,9 +147,9 @@ export default async function AboutPage() {
                   publisher and the author is paid properly.
                 </p>
                 <p>
-                  Authors apply from their dashboard, upload the manuscript and
-                  cover themselves, and every title is read by an editor before
-                  it appears in the catalogue. The books you find here are the
+                  Authors open a workspace from their dashboard, upload a PDF or
+                  EPUB with their own cover, and every eBook is read before it
+                  appears in the catalogue. The books you find here are the
                   real catalogue — every title, price and author profile comes
                   from the same records that run the marketplace.
                 </p>
@@ -213,13 +213,13 @@ export default async function AboutPage() {
           <div className="lg:col-span-7">
             <p className="eyebrow text-gold-soft">The opportunity</p>
             <h2 className="mt-4 max-w-xl font-display text-3xl leading-[1.12] sm:text-4xl">
-              If you have a finished manuscript, the shelf is open.
+              If you have a finished eBook, the shelf is open.
             </h2>
             <p className="mt-4 max-w-xl text-[0.95rem] leading-relaxed text-ivory/65">
               We publish across the whole shop — fiction and non-fiction, poetry
               and drama, business, children’s books and academic texts. Open your
-              workspace, upload the file, and an editor reads it before it goes on
-              sale.
+              workspace, upload your PDF or EPUB, and it is reviewed before it
+              goes on sale.
             </p>
           </div>
           <div className="flex flex-wrap gap-3 lg:col-span-5 lg:justify-end">

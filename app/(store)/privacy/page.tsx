@@ -17,7 +17,7 @@ export default function PrivacyPage() {
       <Clause title="1. Data we hold">
         <ul className="list-disc space-y-1 pl-5">
           <li>Account: name, email address, password hash (held by Supabase Authentication — we never see the password), role and account status.</li>
-          <li>Contact and delivery: phone number where you supply it, and a shipping address if you buy a print edition.</li>
+          <li>Contact details: a phone number where you supply it for payment support. We do not post physical books, so no delivery address is collected.</li>
           <li>Orders: what you bought, the currency and amount, and the payment reference issued by the gateway.</li>
           <li>Downloads: which file was requested and when. We do not store the signed link itself after it is issued.</li>
           <li>Author applicants: pen name, biography, country, photograph and the details you choose to submit for review.</li>
