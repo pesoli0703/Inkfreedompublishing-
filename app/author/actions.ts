@@ -242,6 +242,149 @@ export async function createBookAction(
   redirect(`/author/books/${book.id}`);
 }
 
+/**
+ * Edits a book that has not yet been approved. Covers the corrections an author
+ * needs before a first submission and the fixes an editor asks for when a book
+ * comes back as changes requested — without this, a returned book could never
+ * be put right.
+ */
+export async function updateBookAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const viewer = await getViewer();
+  if (!viewer) return { ok: false, message: "Please sign in again." };
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) return { ok: false, message: "Accounts are not connected." };
+
+  const bookId = text(formData, "book_id");
+  if (!bookId) return { ok: false, message: "Which book?" };
+
+  const { data: book } = await supabase
+    .from("books")
+    .select("id, status")
+    .eq("id", bookId)
+    .maybeSingle();
+
+  if (!book) return { ok: false, message: "Book not found." };
+  if (!["draft", "changes_requested"].includes(String(book.status))) {
+    return {
+      ok: false,
+      message: "A book can only be edited while it is a draft or back with you for changes.",
+    };
+  }
+
+  const title = text(formData, "title");
+  if (title.length < 2) return { ok: false, message: "A title is required." };
+
+  const description = text(formData, "description")
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+  if (description.length === 0) {
+    return { ok: false, message: "At least one description paragraph is required." };
+  }
+
+  const formats = readFormats(formData);
+  if (formats.length === 0) {
+    return { ok: false, message: "Add at least one format with an NGN price." };
+  }
+
+  const { error: bookError } = await supabase
+    .from("books")
+    .update({
+      primary_category_id: text(formData, "category_id") || null,
+      title,
+      subtitle: text(formData, "subtitle") || null,
+      hook: text(formData, "hook") || null,
+      description_paragraphs: description,
+      excerpt_label: text(formData, "excerpt_label") || null,
+      excerpt_body: text(formData, "excerpt_body") || null,
+      themes: text(formData, "themes")
+        .split(",")
+        .map((theme) => theme.trim())
+        .filter(Boolean),
+      language: text(formData, "language") || "English",
+      page_count: Number(formData.get("page_count")) || null,
+      rights_declared_at:
+        formData.get("rights") === "on"
+          ? new Date().toISOString()
+          : undefined,
+    })
+    .eq("id", bookId);
+  if (bookError) return failure(bookError);
+
+  // Formats and their NGN prices. Unticking a format withdraws it from sale
+  // rather than deleting it, so existing order lines keep their reference.
+  const wanted = formats.map((entry) => entry.format);
+  const { error: retireError } = await supabase
+    .from("book_formats")
+    .update({ is_available: false })
+    .eq("book_id", bookId)
+    .not("format", "in", `(${wanted.join(",")})`);
+  if (retireError) return failure(retireError);
+
+  for (const entry of formats) {
+    const { data: existing } = await supabase
+      .from("book_formats")
+      .select("id")
+      .eq("book_id", bookId)
+      .eq("format", entry.format)
+      .maybeSingle();
+
+    let formatId = existing?.id as string | undefined;
+    if (formatId) {
+      const { error } = await supabase
+        .from("book_formats")
+        .update({ is_available: true })
+        .eq("id", formatId);
+      if (error) return failure(error);
+    } else {
+      const { data: created, error } = await supabase
+        .from("book_formats")
+        .insert({ book_id: bookId, format: entry.format, is_available: true })
+        .select("id")
+        .single();
+      if (error) return failure(error);
+      formatId = created.id;
+    }
+
+    const { error: priceError } = await supabase.from("book_prices").upsert(
+      {
+        book_format_id: formatId,
+        currency: "NGN",
+        price_minor: Math.round(entry.priceMajor * 100),
+        is_active: true,
+      },
+      { onConflict: "book_format_id,currency" },
+    );
+    if (priceError) return failure(priceError);
+  }
+
+  const cover = formData.get("cover");
+  if (cover instanceof File && cover.size > 0) {
+    if (cover.size > 10 * 1024 * 1024) {
+      return { ok: false, message: "Cover images must be 10 MB or smaller." };
+    }
+    const extension = cover.name.split(".").pop()?.toLowerCase() ?? "jpg";
+    const path = `${bookId}/cover.${extension}`;
+    const { error: coverError } = await supabase.storage
+      .from("book-covers")
+      .upload(path, cover, { upsert: true, contentType: cover.type || undefined });
+    if (coverError) return failure(coverError);
+
+    const { error: pathError } = await supabase
+      .from("books")
+      .update({ cover_path: path })
+      .eq("id", bookId);
+    if (pathError) return failure(pathError);
+  }
+
+  revalidatePath(`/author/books/${bookId}`);
+  revalidatePath("/author/books");
+  return { ok: true, message: "Saved." };
+}
+
 export async function submitBookAction(bookId: string) {
   const supabase = await createServerSupabaseClient();
   if (!supabase) return;

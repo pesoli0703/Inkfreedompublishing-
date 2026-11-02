@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SectionHeading } from "@/components/section-heading";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { createAdminClient, serviceRoleConfigured } from "@/lib/supabase/admin";
 
 export const metadata: Metadata = {
   title: "About the Press",
   description:
     "INKFREEDOMPUBLISHING is an independent publishing house and digital marketplace for considered books.",
 };
+
+export const revalidate = 60;
 
 const principles = [
   {
@@ -27,15 +31,85 @@ const principles = [
   },
 ];
 
-const status = [
-  { label: "Website & catalogue", value: "Live preview", live: true },
-  { label: "Accounts & sign in", value: "Not connected (Supabase pending)" },
-  { label: "Payments & checkout", value: "Not connected (Flutterwave pending)" },
-  { label: "Newsletter delivery", value: "Not connected" },
-  { label: "Submissions inbox", value: "Not connected" },
-];
+type StatusItem = {
+  label: string;
+  value: string;
+  live: boolean;
+};
 
-export default function AboutPage() {
+/**
+ * Status is read from the running deployment, not hard-coded, so this panel
+ * cannot drift out of date the way a static table does.
+ */
+async function readStatus(): Promise<StatusItem[]> {
+  const catalogueLive = isSupabaseConfigured;
+  const storageLive = serviceRoleConfigured();
+
+  let accounts: StatusItem = {
+    label: "Accounts & sign in",
+    value: "Not configured on this deployment",
+    live: false,
+  };
+  let payments: StatusItem = {
+    label: "Payments & checkout",
+    value: "Not configured on this deployment",
+    live: false,
+  };
+
+  if (catalogueLive && storageLive) {
+    try {
+      const admin = createAdminClient();
+      const [{ count: accountsCount }, { data: settings }] = await Promise.all([
+        admin.from("profiles").select("id", { count: "exact", head: true }),
+        admin.from("platform_settings").select("payments_mode").maybeSingle(),
+      ]);
+
+      accounts = {
+        label: "Accounts & sign in",
+        value: `Live · ${accountsCount ?? 0} ${accountsCount === 1 ? "account" : "accounts"}`,
+        live: true,
+      };
+
+      const mode = String(settings?.payments_mode ?? "disabled");
+      payments = {
+        label: "Payments & checkout",
+        value:
+          mode === "disabled"
+            ? "Configured — switched off until sales open"
+            : mode === "live"
+              ? "Live — cards accepted"
+              : "Sandbox — test payments only",
+        live: mode !== "disabled",
+      };
+    } catch {
+      // Leave the honest "not configured" wording if the read fails.
+    }
+  }
+
+  return [
+    {
+      label: "Website & catalogue",
+      value: catalogueLive ? "Live" : "Not configured",
+      live: catalogueLive,
+    },
+    accounts,
+    {
+      label: "Author applications & uploads",
+      value: catalogueLive ? "Live" : "Not configured",
+      live: catalogueLive,
+    },
+    payments,
+    {
+      label: "Newsletter delivery",
+      value: "Not connected",
+      live: false,
+    },
+  ];
+}
+
+export default async function AboutPage() {
+  const status = await readStatus();
+
   return (
     <>
       <section className="border-b border-line bg-white paper-texture">
@@ -73,17 +147,18 @@ export default function AboutPage() {
                   publisher and the author is paid properly.
                 </p>
                 <p>
-                  This site is the foundation of that marketplace. The catalogue
-                  you can browse today is a sample set of titles and author
-                  profiles, created so the design and structure can be reviewed
-                  before real books are loaded in.
+                  Authors apply from their dashboard, upload the manuscript and
+                  cover themselves, and every title is read by an editor before
+                  it appears in the catalogue. The books you find here are the
+                  real catalogue — every title, price and author profile comes
+                  from the same records that run the marketplace.
                 </p>
               </div>
             </div>
 
             <div className="lg:col-span-5">
               <div className="border border-line bg-ivory p-7">
-                <p className="eyebrow text-charcoal-soft">Build status</p>
+                <p className="eyebrow text-charcoal-soft">What is live today</p>
                 <h2 className="sr-only">Build status</h2>
                 <ul className="mt-5 divide-y divide-line text-sm">
                   {status.map((item) => (
@@ -101,7 +176,8 @@ export default function AboutPage() {
                 </ul>
                 <p className="mt-5 border-t border-line pt-4 text-[0.72rem] leading-relaxed text-charcoal-soft">
                   We would rather show you exactly what is live than imply a
-                  connection that does not exist yet.
+                  connection that does not exist. Customer payments stay switched
+                  off until the purchase and download journey has been verified.
                 </p>
               </div>
             </div>

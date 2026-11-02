@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DashboardShell, Panel } from "@/components/dashboard-shell";
 import { BookFileForm } from "@/components/book-file-form";
+import { EditBookForm, type EditableBook } from "@/components/edit-book-form";
 import { SubmitBookButton } from "@/components/submit-book-button";
 import { authorNav } from "@/lib/nav";
 import { requireViewer } from "@/lib/auth";
@@ -17,24 +18,60 @@ export default async function AuthorBookPage({ params }: { params: Promise<{ id:
   const { data: book } = await supabase
     .from("books")
     .select(
-      "id, book_code, title, subtitle, slug, status, hook, description_paragraphs, submitted_at, reviewed_at, review_note, published_at, cover_path, rights_declared_at",
+      "id, book_code, title, subtitle, slug, status, hook, description_paragraphs, excerpt_label, excerpt_body, themes, language, page_count, primary_category_id, submitted_at, reviewed_at, review_note, published_at, cover_path, rights_declared_at",
     )
     .eq("id", id)
     .maybeSingle();
 
   if (!book) notFound();
 
-  const [{ data: files }, { data: formats }, { data: events }, { data: prices }] = await Promise.all([
+  const [
+    { data: files },
+    { data: formats },
+    { data: events },
+    { data: prices },
+    { data: categories },
+  ] = await Promise.all([
     supabase.from("book_files").select("id, kind, storage_bucket, size_bytes, is_current, created_at").eq("book_id", id).order("created_at", { ascending: false }),
     supabase.from("book_formats").select("id, format, is_available").eq("book_id", id),
     supabase.from("book_moderation_events").select("id, from_status, to_status, action, note, created_at").eq("book_id", id).order("created_at", { ascending: false }),
     supabase.from("book_prices").select("book_format_id, currency, price_minor, is_active").eq("is_active", true),
+    supabase.from("categories").select("id, name").eq("is_active", true).order("sort_order"),
   ]);
 
   const formatIds = new Set((formats ?? []).map((format) => format.id));
   const relevantPrices = (prices ?? []).filter((price) => formatIds.has(price.book_format_id));
   const coverUrl = book.cover_path ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/book-covers/${book.cover_path}` : null;
   const canSubmit = ["draft", "changes_requested"].includes(book.status as string);
+
+  const editableBook: EditableBook = {
+    id: book.id,
+    title: book.title,
+    subtitle: book.subtitle,
+    hook: book.hook,
+    categoryId: book.primary_category_id,
+    language: book.language,
+    pageCount: book.page_count,
+    description: book.description_paragraphs ?? [],
+    excerptLabel: book.excerpt_label,
+    excerptBody: book.excerpt_body ?? [],
+    themes: book.themes ?? [],
+    rightsDeclared: Boolean(book.rights_declared_at),
+    coverPath: book.cover_path,
+    formats: (["paperback", "hardcover", "ebook"] as const).map((format) => {
+      const row = (formats ?? []).find((entry) => entry.format === format);
+      const price = row
+        ? relevantPrices.find(
+            (entry) => entry.book_format_id === row.id && entry.currency === "NGN",
+          )
+        : undefined;
+      return {
+        format,
+        available: Boolean(row?.is_available),
+        priceMajor: price ? Number(price.price_minor) / 100 : null,
+      };
+    }),
+  };
 
   return (
     <DashboardShell
@@ -59,6 +96,16 @@ export default async function AuthorBookPage({ params }: { params: Promise<{ id:
             <p className="mt-2 text-[0.72rem] text-charcoal-soft">
               Reviewed {formatDate(book.reviewed_at)}. Address the note, then resubmit.
             </p>
+          </Panel>
+        )}
+
+        {canSubmit && (
+          <Panel title="Edit this book" tone="quiet">
+            <p className="mb-5 text-[0.82rem] leading-relaxed text-charcoal-soft">
+              Everything here can still be changed until an editor approves the
+              book. Save your changes, then submit for review when it is ready.
+            </p>
+            <EditBookForm book={editableBook} categories={categories ?? []} />
           </Panel>
         )}
 
