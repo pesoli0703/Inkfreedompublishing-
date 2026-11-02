@@ -1,20 +1,20 @@
-import { PurchasePanel } from "@/components/purchase-panel";
 import { LivePurchasePanel } from "@/components/live-purchase-panel";
-import { getLiveBookBySlug } from "@/lib/catalogue-db";
-import type { Book } from "@/lib/data/types";
+import type { LiveBook } from "@/lib/catalogue-live";
 
 /**
- * Uses the live catalogue when the slug exists in Supabase; otherwise falls back
- * to the labelled design-preview panel. The fallback never implies a real title
- * is for sale.
+ * Purchase panel for a published title. Only live books reach this component,
+ * so there is no placeholder purchase flow to fall back to.
  */
-export async function BookPurchase({ slug, book }: { slug: string; book: Book }) {
-  const live = await getLiveBookBySlug(slug);
-  if (!live || live.offers.length === 0) return <PurchasePanel book={book} />;
+export function BookPurchase({ book }: { book: LiveBook }) {
+  if (book.offers.length === 0) return null;
 
   return (
     <div className="space-y-3">
-      <LivePurchasePanel title={live.title} offers={live.offers} currencies={live.currencies} />
+      <LivePurchasePanel
+        title={book.title}
+        offers={book.offers}
+        currencies={book.currencies}
+      />
       <p className="text-[0.7rem] leading-relaxed text-charcoal-soft">
         Prices in other currencies are converted from the author’s NGN base price
         using the platform rate table. Each converted price carries its rate,

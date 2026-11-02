@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
-import { books } from "@/lib/data/books";
-import { authors } from "@/lib/data/authors";
+import { loadLiveAuthors, loadLiveCatalogue } from "@/lib/catalogue-live";
 
 const base = "https://inkfreedompublishing.vercel.app";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export const revalidate = 300;
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const pages = [
     "",
     "/books",
@@ -24,6 +25,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/copyright",
   ];
 
+  // Only published titles and approved authors are indexable.
+  const [books, authors] = await Promise.all([
+    loadLiveCatalogue(),
+    loadLiveAuthors(),
+  ]);
+
   return [
     ...pages.map((path) => ({
       url: `${base}${path}`,
@@ -35,10 +42,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
       priority: 0.6,
     })),
-    ...authors.map((author) => ({
-      url: `${base}/authors/${author.slug}`,
-      lastModified: new Date(),
-      priority: 0.5,
-    })),
+    ...authors
+      .filter((author) => author.titles > 0)
+      .map((author) => ({
+        url: `${base}/authors/${author.slug}`,
+        lastModified: new Date(),
+        priority: 0.5,
+      })),
   ];
 }

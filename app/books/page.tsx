@@ -4,21 +4,19 @@ import { BookGrid } from "@/components/book-card";
 import { SearchBar } from "@/components/search-bar";
 import { SortSelect } from "@/components/sort-select";
 import {
-  getCategory,
-  searchBooks,
-  sortBooks,
+  browseBooks,
   sortOptions,
   type SortKey,
 } from "@/lib/catalogue";
-import { categories } from "@/lib/data/categories";
-import { books as previewBooks } from "@/lib/data/books";
-import { loadLiveCatalogue } from "@/lib/catalogue-live";
+import { loadCategories, loadLiveCatalogue } from "@/lib/catalogue-live";
 
 export const metadata: Metadata = {
   title: "Discover Books",
   description:
-    "Browse the INKFREEDOMPUBLISHING catalogue by category, author or price. Sample catalogue for the preview build.",
+    "Browse the INKFREEDOMPUBLISHING catalogue by category, author or price.",
 };
+
+export const revalidate = 300;
 
 type BooksSearchParams = {
   q?: string;
@@ -42,16 +40,18 @@ export default async function BooksPage({
     ? (sortParam as SortKey)
     : "curated";
 
-  const activeCategory = getCategory(category);
-  const live = await loadLiveCatalogue();
-  const isPreview = live.length === 0;
-  const pool = isPreview ? previewBooks : live;
+  const [catalogue, categories] = await Promise.all([
+    loadLiveCatalogue(),
+    loadCategories(),
+  ]);
 
-  let results = searchBooks(q, pool);
-  if (activeCategory) {
-    results = results.filter((book) => book.category === activeCategory.slug);
-  }
-  results = sortBooks(results, sort);
+  const activeCategory = categories.find((item) => item.slug === category);
+  const results = browseBooks(catalogue, {
+    q,
+    category: activeCategory?.slug,
+    sort,
+  });
+  const total = catalogue.length;
 
   const chipHref = (nextCategory?: string) => {
     const query = new URLSearchParams();
@@ -96,9 +96,9 @@ export default async function BooksPage({
                   : "Independent titles across fiction, poetry, essays, memoir, business and children’s books."}
               </p>
               <p className="mt-4 inline-flex border border-line bg-white px-3 py-1.5 text-[0.66rem] font-medium tracking-[0.12em] text-charcoal-soft uppercase">
-                {isPreview
-                  ? "Preview catalogue — no titles published yet"
-                  : `Live catalogue — ${live.length} published ${live.length === 1 ? "title" : "titles"}`}
+                {total === 0
+                  ? "No titles published yet"
+                  : `Live catalogue — ${total} published ${total === 1 ? "title" : "titles"}`}
               </p>
             </div>
             <div className="lg:col-span-5">
@@ -156,16 +156,23 @@ export default async function BooksPage({
           <div className="mt-10 border border-line bg-white px-6 py-16 text-center">
             <p className="font-display text-2xl text-navy">No titles found</p>
             <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-charcoal-soft">
-              Nothing in {isPreview ? "the preview catalogue" : "the catalogue"}{" "}
-              matches
-              {q ? ` “${q}”` : " those filters"}. Try a different title, author
-              or theme — or browse the full list.
+              {total === 0 ? (
+                "The catalogue is empty right now. Titles appear here as soon as they are published."
+              ) : q ? (
+                <>
+                  Nothing in the catalogue matches{" "}
+                  <span className="font-medium text-navy">“{q}”</span>. Try a
+                  different title, author or theme.
+                </>
+              ) : (
+                "Nothing matches those filters. Try a different shelf, or browse the full list."
+              )}
             </p>
             <Link
-              href="/books"
+              href={total === 0 ? "/publish" : "/books"}
               className="mt-7 inline-flex bg-navy px-6 py-3.5 text-[0.7rem] font-semibold tracking-[0.18em] text-ivory uppercase transition-colors hover:bg-navy-soft"
             >
-              View all books
+              {total === 0 ? "Publish with us" : "View all books"}
             </Link>
           </div>
         )}

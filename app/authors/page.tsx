@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AuthorCard } from "@/components/author-card";
-import { authors } from "@/lib/data/authors";
+import { loadLiveAuthors } from "@/lib/catalogue-live";
 
 export const metadata: Metadata = {
   title: "Authors",
-  description:
-    "The authors on the INKFREEDOMPUBLISHING list. Sample profiles for the preview build.",
+  description: "The authors published by INKFREEDOMPUBLISHING.",
 };
 
-export default function AuthorsPage() {
+export const revalidate = 300;
+
+export default async function AuthorsPage() {
+  const authors = await loadLiveAuthors();
+
   return (
     <>
       <section className="border-b border-line bg-white paper-texture">
@@ -29,19 +32,35 @@ export default function AuthorsPage() {
             The people on the list
           </h1>
           <p className="mt-5 max-w-2xl text-[0.97rem] leading-relaxed text-charcoal-soft">
-            A small, hand-edited list of writers. These profiles are placeholders
-            created for the preview build and will be replaced with real author
-            biographies, photographs and titles.
+            A small, hand-edited list of writers. Profiles are written by the
+            authors themselves and appear once their application has been
+            approved.
           </p>
         </div>
       </section>
 
       <section className="container-editorial py-14 sm:py-20">
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {authors.map((author) => (
-            <AuthorCard key={author.slug} author={author} />
-          ))}
-        </div>
+        {authors.length === 0 ? (
+          <div className="border border-line bg-white px-6 py-16 text-center">
+            <p className="font-display text-2xl text-navy">No authors yet</p>
+            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-charcoal-soft">
+              Approved author profiles appear here. Ours is a small list, and it
+              is open — the first names will arrive with the first titles.
+            </p>
+            <Link
+              href="/publish"
+              className="mt-7 inline-flex bg-navy px-6 py-3.5 text-[0.7rem] font-semibold tracking-[0.18em] text-ivory uppercase transition-colors hover:bg-navy-soft"
+            >
+              Apply to publish
+            </Link>
+          </div>
+        ) : (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {authors.map((author) => (
+              <AuthorCard key={author.slug} author={author} />
+            ))}
+          </div>
+        )}
 
         <div className="mt-14 flex flex-col items-start justify-between gap-6 border border-line bg-white p-8 sm:flex-row sm:items-center sm:p-10">
           <div>

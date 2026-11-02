@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AuthForm } from "@/components/auth-form";
-import { books } from "@/lib/data/books";
 import { BookCover } from "@/components/book-cover";
+import { loadLiveCatalogue } from "@/lib/catalogue-live";
 
 export const metadata: Metadata = {
   title: "Sign In",
@@ -18,8 +18,8 @@ const benefits = [
   "Access the author dashboard for submissions",
 ];
 
-export default function SignInPage() {
-  const shelf = books.slice(0, 3);
+export default async function SignInPage() {
+  const shelf = (await loadLiveCatalogue()).slice(0, 3);
 
   return (
     <section className="container-editorial py-12 sm:py-20">

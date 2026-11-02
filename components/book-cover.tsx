@@ -1,11 +1,13 @@
 import type { Book } from "@/lib/data/types";
 import { authorName } from "@/lib/catalogue";
+import { publicAssetUrl } from "@/lib/catalogue-live";
 
 /**
- * Parametric cover art for the placeholder catalogue.
- * Each book carries a palette + motif so the shelf looks like a considered
- * list rather than a random set of stock images. Real cover artwork can later
- * replace this component without touching the cards.
+ * A title's cover.
+ *
+ * Uploaded artwork is shown when the book has one. Otherwise a typographic
+ * cover is generated from the book's own details — stable for a given title,
+ * and replaced automatically the moment an author uploads a real cover.
  */
 export function BookCover({
   book,
@@ -22,6 +24,26 @@ export function BookCover({
 }) {
   const { bg, ink, accent, motif } = book.cover;
   const dark = isDark(bg);
+  const artwork = publicAssetUrl("book-covers", book.coverPath);
+
+  if (artwork) {
+    return (
+      <div
+        className={`relative isolate aspect-2/3 w-full overflow-hidden rounded-[2px] bg-ivory-deep shadow-[0_1px_1px_rgba(16,28,50,0.08),0_10px_24px_-12px_rgba(16,28,50,0.45)] ${className}`}
+        data-priority={priority ? "true" : undefined}
+        aria-hidden={decorative || undefined}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={artwork}
+          alt={decorative ? "" : `${book.title} by ${authorName(book)}`}
+          loading={priority ? "eager" : "lazy"}
+          decoding="async"
+          className="h-full w-full object-cover"
+        />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -89,7 +111,7 @@ export function BookCover({
             className="font-medium tracking-[0.1em] uppercase opacity-90"
             style={{ fontSize: "clamp(0.38rem, 4.4cqw, 0.7rem)" }}
           >
-            {authorName(book.authorSlug)}
+            {authorName(book)}
           </p>
         </div>
       </div>

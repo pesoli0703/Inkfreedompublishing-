@@ -69,11 +69,13 @@ export function SiteFooter() {
             <div>
               <h2 className="eyebrow text-ivory/55">Contact</h2>
               <p className="mt-3 max-w-sm text-sm leading-relaxed text-ivory/60">
-                Enquiries and submissions:{" "}
-                <span className="text-ivory/85">
-                  contact details are published with the live site
-                </span>
-                . The contact form is not connected in this preview build.
+                Publishing enquiries go through the author application, which
+                records each request and its decision. For orders, downloads and
+                copyright notices, use the routes on the{" "}
+                <Link href="/contact" className="text-ivory/85 underline">
+                  contact page
+                </Link>
+                .
               </p>
             </div>
 
@@ -101,8 +103,8 @@ export function SiteFooter() {
             reserved.
           </p>
           <p className="text-ivory/55">
-            Preview build — sample catalogue. Accounts, payments and newsletter
-            are not connected.
+            Customer payments are switched off while checkout is verified.
+            Newsletter signup is not connected.
           </p>
         </div>
       </div>

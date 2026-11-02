@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { authorName, categoryName } from "@/lib/catalogue";
 import type { Book } from "@/lib/data/types";
 import { formatPrice } from "@/lib/format";
 import { BookCover } from "./book-cover";
@@ -16,7 +15,7 @@ export function BookCard({
       <Link
         href={`/books/${book.slug}`}
         className="block focus-visible:outline-offset-4"
-        aria-label={`${book.title} by ${authorName(book.authorSlug)}`}
+        aria-label={`${book.title} by ${book.authorName}`}
       >
         <div className="relative overflow-hidden rounded-[2px]">
           <BookCover
@@ -31,11 +30,11 @@ export function BookCard({
         </div>
 
         <div className="mt-5 flex flex-col gap-1.5">
-          <p className="eyebrow text-gold-deep">{categoryName(book.category)}</p>
+          <p className="eyebrow text-gold-deep">{book.categoryName}</p>
           <h3 className="font-display text-xl leading-snug text-navy transition-colors group-hover:text-gold-deep">
             {book.title}
           </h3>
-          <p className="text-sm text-charcoal-soft">{authorName(book.authorSlug)}</p>
+          <p className="text-sm text-charcoal-soft">{book.authorName}</p>
           <div className="mt-2 flex items-baseline gap-3 border-t border-line pt-3">
             <span className="text-sm font-semibold text-navy">
               {formatPrice(book.price)}
@@ -57,6 +56,8 @@ export function BookGrid({
   books: Book[];
   className?: string;
 }) {
+  if (books.length === 0) return null;
+
   return (
     <div
       className={`grid grid-cols-2 gap-x-5 gap-y-10 sm:gap-x-6 md:grid-cols-3 lg:grid-cols-4 ${className}`}
