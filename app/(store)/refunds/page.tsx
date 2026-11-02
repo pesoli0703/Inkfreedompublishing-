@@ -64,11 +64,15 @@ export default function RefundsPage() {
         </p>
       </Clause>
 
-      <Clause title="6. Print editions">
+      <Clause title="6. eBook files">
         <p>
-          Print orders that arrive damaged or are not delivered are replaced or
-          refunded once the carrier’s report is received. Print orders are not
-          currently offered while fulfilment arrangements are finalised.
+          Every title is delivered as a download — no physical copies are sold or
+          shipped. If the file will not open, or is not the file described on the
+          book page, report it through{" "}
+          <a className="underline" href="/contact">
+            contact
+          </a>{" "}
+          with the order reference and it is replaced or refunded.
         </p>
       </Clause>
     </LegalPage>

@@ -18,9 +18,8 @@ export default function TermsPage() {
         <p>
           INKFREEDOMPUBLISHING is an international independent digital publishing
           marketplace operated by PEACE-TECH MULTIBIZ COMMUNICATIONS, a Nigerian
-          Business Name. The storefront sells digital editions and — where a title
-          offers them — print editions, and it hosts the author dashboard used to
-          submit manuscripts.
+          Business Name. The storefront sells digital eBooks, delivered as PDF or
+          EPUB downloads, and it hosts the author dashboard used to upload them.
         </p>
         <p>
           Contact for any matter in these terms is available through the{" "}
