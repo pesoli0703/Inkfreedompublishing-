@@ -20,7 +20,7 @@ surface that depends on live data took its documented "not connected" branch:
 "Accounts are not connected on this deployment" panel, and author/reader
 dashboards refused to pretend.
 
-## Variables now set (target: Preview + Development)
+## Variables now set (Production + Preview + Development)
 
 | Name | Purpose | Sensitive |
 | --- | --- | --- |
@@ -29,12 +29,16 @@ dashboards refused to pretend.
 | `SUPABASE_SERVICE_ROLE_KEY` | server-only admin client (`lib/supabase/admin.ts`) | **yes** |
 | `NEXT_PUBLIC_SITE_URL` | canonical origin used when building absolute links | no |
 
-**Production is deliberately untouched.** Phase 1 remains a preview; promoting
-these variables to the production target is a separate, explicit decision.
+| `CRON_SECRET` | bearer token the scheduled `/api/cron/*` routes require | **yes** |
 
-Still unset, and safe to stay unset while `platform_settings.payments_mode =
-'disabled'`: the `FLUTTERWAVE_*` keys, `FX_PROVIDER_URL`, `FX_PROVIDER_API_KEY`
-and `CRON_SECRET`. See `docs/phase-2/08-flutterwave.md` and `.env.example`.
+Production was activated on the owner's explicit instruction ("activate
+everything now"), so `inkfreedompublishing.vercel.app` now runs the Phase 2
+build and is connected to the live Supabase project.
+
+Still unset because only you can supply them: the `FLUTTERWAVE_*` keys,
+`FX_PROVIDER_URL` and `FX_PROVIDER_API_KEY`. See `docs/phase-2/08-flutterwave.md`
+and `.env.example`. `platform_settings.payments_mode` remains `'disabled'`, so
+the storefront still declares payments unavailable rather than pretending.
 
 ## How to verify a deployment really is connected
 
@@ -60,6 +64,11 @@ and `CRON_SECRET`. See `docs/phase-2/08-flutterwave.md` and `.env.example`.
 - A confirmation email is required to activate a new reader account
   (`mailer_autoconfirm = false`). Supabase's built-in SMTP is rate limited, so
   auth QA should use accounts that already exist or a configured SMTP provider.
-- Scheduled jobs (`/api/cron/*`) are **not** running: the project has no
-  `crons` entries and no `CRON_SECRET`. Cron entries only execute on production
-  deployments, so this stays on the pre-launch list.
+- Scheduled jobs run from `vercel.json`. The project is on Vercel Hobby, which
+  allows **two** cron jobs and **once per day**, so FX refresh is `0 2 * * *`
+  and payment reconciliation is `30 2 * * *`. Cron only executes on production
+  deployments. Vercel sends `Authorization: Bearer $CRON_SECRET` automatically
+  when that variable exists.
+- Supabase email confirmation is currently **off** (`mailer_autoconfirm = true`)
+  so that accounts can be created without a working SMTP provider. Re-enable it
+  once custom SMTP is configured — until then, sign-ups are not email-verified.
