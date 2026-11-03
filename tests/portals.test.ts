@@ -187,6 +187,17 @@ describe("portal security", () => {
     expect(page).not.toContain("update({ role");
   });
 
+  it("never lets a failed admin query look like an empty list", () => {
+    const page = read("app/admin/books/page.tsx");
+    // An embedded select fails as a whole when PostgREST cannot resolve the
+    // relationship, which rendered "Nothing awaiting review" while a book was
+    // waiting. Flat selects plus visible errors are the rule now.
+    expect(page).not.toMatch(/\.select\(\s*"[^"]*\w\([^"]*\)/);
+    expect(page).toContain("error?.message");
+    expect(page).toContain("could not be loaded");
+    expect(page).toContain("pending.length");
+  });
+
   it("has a real sign-out that only POST can trigger", () => {
     const route = read("app/auth/signout/route.ts");
     expect(route).toContain("export async function POST");
