@@ -48,13 +48,14 @@ export function PortalHeader({
       <div className="container-editorial flex h-16 items-center justify-between gap-4 sm:h-18">
         <div className="flex items-center gap-3 sm:gap-5">
           <Wordmark tone={admin ? "ivory" : "navy"} showTagline={false} />
-          <span
+          <Link
+            href={admin ? "/admin" : "/author"}
             className={`hidden border px-2.5 py-1 text-[0.6rem] font-semibold tracking-[0.16em] uppercase sm:inline-block ${
               admin ? "border-gold/40 text-gold-soft" : "border-gold/50 text-gold-deep"
             }`}
           >
             {admin ? "Admin" : "Authors"}
-          </span>
+          </Link>
         </div>
 
         <nav aria-label={`${admin ? "Admin" : "Author"} portal`} className="hidden items-center gap-6 lg:flex">
@@ -145,6 +146,32 @@ export function PortalHeader({
           </button>
         </div>
       </div>
+
+      <nav
+        aria-label={`${admin ? "Admin" : "Author"} portal, compact`}
+        className={`container-editorial flex gap-5 overflow-x-auto border-t py-2.5 lg:hidden ${
+          admin ? "border-white/10" : "border-line"
+        }`}
+      >
+        {items.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            aria-current={isActive(item.href) ? "page" : undefined}
+            className={`shrink-0 text-[0.7rem] font-medium tracking-[0.1em] whitespace-nowrap uppercase ${
+              isActive(item.href)
+                ? admin
+                  ? "text-gold-soft"
+                  : "text-navy"
+                : admin
+                  ? "text-ivory/60"
+                  : "text-charcoal-soft"
+            }`}
+          >
+            {item.label}
+          </Link>
+        ))}
+      </nav>
 
       <div
         id="portal-mobile-nav"

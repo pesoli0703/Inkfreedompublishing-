@@ -19,16 +19,23 @@ export default async function AuthorLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const viewer = await getViewer();
 
+  // An administrator also runs the console, and should not have to remember a
+  // URL to get there from the author side.
+  const portalLinks =
+    viewer?.role === "admin"
+      ? [{ href: "/admin", label: "Admin console" }, ...links]
+      : links;
+
   return (
     <>
       <PortalHeader
         portal="author"
         items={items}
-        links={links}
+        links={portalLinks}
         viewer={viewer ? { name: viewer.fullName ?? "", email: viewer.email } : null}
       />
       {children}
-      <PortalFooter portal="author" links={links} />
+      <PortalFooter portal="author" links={portalLinks} />
     </>
   );
 }
