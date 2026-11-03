@@ -27,6 +27,7 @@ const PUBLIC_PATHS = new Set([
   "/author/signin",
   "/author/register",
   "/admin/signin",
+  "/admin/no-access",
 ]);
 
 const isProtected = (path: string) =>
@@ -95,7 +96,8 @@ export async function middleware(request: NextRequest) {
   if (
     user &&
     (effectivePath === "/admin" || effectivePath.startsWith("/admin/")) &&
-    effectivePath !== "/admin/signin"
+    effectivePath !== "/admin/signin" &&
+    effectivePath !== "/admin/no-access"
   ) {
     const { data: profile } = await supabase
       .from("profiles")
@@ -104,7 +106,13 @@ export async function middleware(request: NextRequest) {
       .maybeSingle();
 
     if (profile?.role !== "admin") {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      // Say why, rather than silently landing on the reader dashboard: a
+      // redirect with no explanation is indistinguishable from a dead link.
+      const denied = request.nextUrl.clone();
+      denied.pathname = "/admin/no-access";
+      denied.search = "";
+      denied.searchParams.set("from", effectivePath);
+      return NextResponse.redirect(denied);
     }
   }
 

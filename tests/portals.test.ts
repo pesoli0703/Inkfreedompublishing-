@@ -134,8 +134,13 @@ function pageFiles(dir: string): string[] {
 
 describe("portal security", () => {
   it("gates every admin page on the server, not just in the UI", () => {
+      // Sign-in and the "no access" explanation are the two screens a
+      // non-administrator is allowed to reach.
       const pages = pageFiles("app/admin").filter(
-        (path) => path.endsWith("page.tsx") && !path.endsWith("signin/page.tsx"),
+        (path) =>
+          path.endsWith("page.tsx") &&
+          !path.endsWith("signin/page.tsx") &&
+          !path.endsWith("no-access/page.tsx"),
       );
     expect(pages.length).toBeGreaterThan(10);
     for (const page of pages) {
@@ -164,9 +169,22 @@ describe("portal security", () => {
 
   it("redirects unauthorised admins away instead of rendering", () => {
     const auth = read("lib/auth.ts");
-    expect(auth).toContain('if (viewer.role !== "admin") redirect("/dashboard")');
+    // The redirect has to explain itself: a silent hop to /dashboard is
+    // indistinguishable from a dead link.
+    expect(auth).toContain('if (viewer.role !== "admin") redirect(`/admin/no-access');
     const middleware = read("middleware.ts");
     expect(middleware).toContain('profile?.role !== "admin"');
+    expect(middleware).toContain('denied.pathname = "/admin/no-access"');
+  });
+
+  it("explains a missing admin role instead of bouncing silently", () => {
+    const page = read("app/admin/no-access/page.tsx");
+    expect(page).toContain("getViewer");
+    expect(page).toContain("redirect(\"/admin\")");
+    expect(page).toContain("/auth/signout");
+    // It must never grant anything.
+    expect(page).not.toContain("service_role");
+    expect(page).not.toContain("update({ role");
   });
 
   it("has a real sign-out that only POST can trigger", () => {

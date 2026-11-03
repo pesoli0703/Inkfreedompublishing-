@@ -65,7 +65,7 @@ export async function requireAdmin(nextPath = "/admin"): Promise<Viewer> {
   const viewer = await getViewer();
   if (!viewer) redirect(`/admin/signin?next=${encodeURIComponent(nextPath)}`);
   if (viewer.status !== "active") redirect("/suspended");
-  if (viewer.role !== "admin") redirect("/dashboard");
+  if (viewer.role !== "admin") redirect(`/admin/no-access?from=${encodeURIComponent(nextPath)}`);
   return viewer;
 }
 
